@@ -5,7 +5,8 @@ const canUseVideo = () =>
   window.matchMedia &&
   !window.matchMedia("(prefers-reduced-motion: reduce)").matches &&
   !window.matchMedia("(prefers-reduced-data: reduce)").matches &&
-  window.innerWidth >= 400; // allow on phones >= 400px
+  // allow small phones too (iPhone SE/older Android = 320px)
+  window.innerWidth >= 320;
 
 export default function BackgroundFX({ sources }) {
   const canvasRef = useRef(null);
@@ -15,11 +16,11 @@ export default function BackgroundFX({ sources }) {
   const allowVideo = typeof window !== "undefined" && canUseVideo();
   const showVideo = allowVideo && !failed;
 
-  // Use multiple resolutions so mobile grabs a smaller file first
+  // Multi-resolution sources so small phones fetch a smaller file first
   const srcSet = useMemo(() => {
     if (sources?.length) return sources;
     return [
-      // WebM (preferred)
+      // WebM preferred
       { src: "/bg-1080.webm", type: "video/webm", media: "(min-width:1280px)" },
       { src: "/bg-720.webm",  type: "video/webm", media: "(min-width:640px)" },
       { src: "/bg-480.webm",  type: "video/webm" },
@@ -30,7 +31,7 @@ export default function BackgroundFX({ sources }) {
     ];
   }, [sources]);
 
-  // (keep your lightweight particles)
+  // Lightweight particles (disabled on small screens / reduced-motion)
   useEffect(() => {
     const reduced =
       window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
@@ -103,12 +104,12 @@ export default function BackgroundFX({ sources }) {
   return (
     <div
       className="absolute inset-0 overflow-hidden"
-      // Solid Cyber Noir fallback while video buffers (no JPG)
+      // Solid Cyber Noir fallback while the video buffers (no JPG poster)
       style={{ background: "#0B0F19" }}
     >
       {showVideo && (
         <video
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-400 ${
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
             ready ? "opacity-100" : "opacity-0"
           }`}
           autoPlay
@@ -116,9 +117,9 @@ export default function BackgroundFX({ sources }) {
           muted
           loop
           preload="auto"
-          // No poster attribute at all
+          // mark ready as soon as possible for iOS/Safari
+          onLoadedData={() => setReady(true)}
           onCanPlayThrough={() => setReady(true)}
-          onLoadedData={() => setReady(true)}      // helps Safari
           onError={() => { setReady(false); setFailed(true); }}
         >
           {srcSet.map((s) => (

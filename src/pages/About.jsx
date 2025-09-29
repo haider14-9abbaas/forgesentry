@@ -17,16 +17,16 @@ import {
 import SectionHeader from '../components/SectionHeader';
 import WhatsAppButton from '../components/WhatsAppButton';
 
-// ✅ import images instead of using "/src/..."
+// Import images (do not use "/src/...").
 import haiderImg from '../assets/haider.png';
-import hamzaImg  from '../assets/hamza.png';
+import hamzaImg from '../assets/hamza.png';
 
 const About = () => {
   const founders = [
     {
       name: 'Syed Haider Abbas Zaidi',
       role: 'Cybersecurity Professional & MERN Developer',
-      image: haiderImg, // ✅
+      image: haiderImg,
       linkedin: 'https://www.linkedin.com/in/syed-haider-abbas-zaidi-132525215/',
       github: 'https://github.com/haider14-9abbaas',
       bio: 'Cybersecurity expert with extensive experience in MERN stack development. Specializes in building secure, scalable applications with a focus on threat modeling and security implementation. Currently pursuing BS in Cybersecurity (expected 2027).',
@@ -36,7 +36,7 @@ const About = () => {
     {
       name: 'Hamza Kamran',
       role: 'Cybersecurity & Full-Stack Developer',
-      image: hamzaImg, // ✅
+      image: hamzaImg,
       linkedin: 'https://www.linkedin.com/in/hamza-kamran-271872297/',
       github: 'https://github.com/Hamza-hani',
       bio: 'Full-stack developer with strong cybersecurity background. Expert in creating secure application architectures and implementing robust authentication systems. Passionate about automation and AI integration.',
@@ -120,8 +120,10 @@ const About = () => {
                 transition={{ delay: i * 0.1 }}
                 className="text-center"
               >
-                <div className="flex items-center justify-center w-16 h-16 rounded-xl mx-auto mb-6"
-                     style={{ backgroundColor: 'rgba(34,211,238,0.12)' }}>
+                <div
+                  className="flex items-center justify-center w-16 h-16 rounded-xl mx-auto mb-6"
+                  style={{ backgroundColor: 'rgba(34,211,238,0.12)' }}
+                >
                   <value.icon className="h-8 w-8" style={{ color: 'var(--cn-cyan)' }} />
                 </div>
                 <h3 className="text-xl font-display font-semibold text-slate-900 mb-4">{value.title}</h3>
@@ -162,16 +164,35 @@ const About = () => {
                   />
                   <h3 className="text-2xl font-display font-semibold text-slate-900 mb-2">{f.name}</h3>
                   <p className="font-medium mb-4" style={{ color: 'var(--cn-cyan)' }}>{f.role}</p>
-                  <div className="flex items-center justify-center space-x-4">
-                    <a href={f.linkedin} target="_blank" rel="noopener noreferrer"
-                       className="p-2 bg-slate-100 rounded-lg hover:text-white transition-colors duration-200"
-                       style={{ border: '1px solid #e5e7eb' }} aria-label={`${f.name}'s LinkedIn`}>
-                      <Linkedin size={20} />
+
+                  {/* High-contrast social buttons (visible on white, gradient hover) */}
+                  <div className="flex items-center justify-center gap-3">
+                    <a
+                      href={f.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${f.name}'s LinkedIn`}
+                      className="relative group inline-flex items-center justify-center p-2 rounded-lg ring-1 ring-slate-200 bg-white text-slate-700 transition-all duration-200 hover:text-white"
+                    >
+                      <span
+                        className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ background: 'linear-gradient(135deg,var(--cn-cyan),var(--cn-purple))' }}
+                      />
+                      <Linkedin size={20} className="relative" />
                     </a>
-                    <a href={f.github} target="_blank" rel="noopener noreferrer"
-                       className="p-2 bg-slate-100 rounded-lg hover:text-white transition-colors duration-200"
-                       style={{ border: '1px solid #e5e7eb' }} aria-label={`${f.name}'s GitHub`}>
-                      <Github size={20} />
+
+                    <a
+                      href={f.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${f.name}'s GitHub`}
+                      className="relative group inline-flex items-center justify-center p-2 rounded-lg ring-1 ring-slate-200 bg-white text-slate-700 transition-all duration-200 hover:text-white"
+                    >
+                      <span
+                        className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ background: 'linear-gradient(135deg,var(--cn-purple),var(--cn-cyan))' }}
+                      />
+                      <Github size={20} className="relative" />
                     </a>
                   </div>
                 </div>
@@ -182,9 +203,11 @@ const About = () => {
                   <h4 className="font-semibold text-slate-900 mb-3">Expertise</h4>
                   <div className="flex flex-wrap gap-2">
                     {f.expertise.map((s) => (
-                      <span key={s}
-                            className="px-3 py-1 text-sm font-medium rounded-full"
-                            style={{ background: 'rgba(34,211,238,0.12)', color: '#0f172a', border: '1px solid rgba(34,211,238,.25)' }}>
+                      <span
+                        key={s}
+                        className="px-3 py-1 text-sm font-medium rounded-full"
+                        style={{ background: 'rgba(34,211,238,0.12)', color: '#0f172a', border: '1px solid rgba(34,211,238,.25)' }}
+                      >
                         {s}
                       </span>
                     ))}
@@ -217,7 +240,7 @@ const About = () => {
             center
             className="mb-16"
           />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {skills.map((s, i) => (
               <motion.div
                 key={s.category}
@@ -284,8 +307,10 @@ const About = () => {
             viewport={{ once: true }}
             className="text-center max-w-3xl mx-auto"
           >
-            <div className="flex items-center justify-center w-16 h-16 rounded-xl mx-auto mb-6"
-                 style={{ backgroundColor: 'rgba(163,230,53,0.12)' }}>
+            <div
+              className="flex items-center justify-center w-16 h-16 rounded-xl mx-auto mb-6"
+              style={{ backgroundColor: 'rgba(163,230,53,0.12)' }}
+            >
               <Briefcase className="h-8 w-8" style={{ color: 'var(--cn-lime)' }} />
             </div>
             <h2 className="text-3xl lg:text-4xl font-display font-bold text-slate-900 mb-6">Open to New Opportunities</h2>
@@ -297,8 +322,11 @@ const About = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
               {['Internships', 'Freelance Projects', 'Strategic Partnerships'].map((o) => (
-                <div key={o} className="rounded-lg p-4"
-                     style={{ background: 'rgba(15,23,42,0.04)', border: '1px solid rgba(148,163,184,.35)' }}>
+                <div
+                  key={o}
+                  className="rounded-lg p-4"
+                  style={{ background: 'rgba(15,23,42,0.04)', border: '1px solid rgba(148,163,184,.35)' }}
+                >
                   <CheckCircle size={20} style={{ color: 'var(--cn-lime)' }} className="mx-auto mb-2" />
                   <span className="text-slate-700 font-medium">{o}</span>
                 </div>
