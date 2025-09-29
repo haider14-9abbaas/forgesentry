@@ -1,42 +1,61 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-const canUseVideo = () =>
-  typeof window !== "undefined" &&
-  window.matchMedia &&
-  !window.matchMedia("(prefers-reduced-motion: reduce)").matches &&
-  !window.matchMedia("(prefers-reduced-data: reduce)").matches &&
-  // allow small phones too (iPhone SE/older Android = 320px)
-  window.innerWidth >= 320;
-
 export default function BackgroundFX({ sources }) {
   const canvasRef = useRef(null);
+  const vidRef = useRef(null);
   const [ready, setReady] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [blocked, setBlocked] = useState(false);   // autoplay blocked?
 
-  const allowVideo = typeof window !== "undefined" && canUseVideo();
-  const showVideo = allowVideo && !failed;
-
-  // Multi-resolution sources so small phones fetch a smaller file first
+  // Multi-resolution source set (smallest last so it’s default for tiny phones)
   const srcSet = useMemo(() => {
     if (sources?.length) return sources;
     return [
-      // WebM preferred
+      // WebM (preferred on Android/desktop)
       { src: "/bg-1080.webm", type: "video/webm", media: "(min-width:1280px)" },
       { src: "/bg-720.webm",  type: "video/webm", media: "(min-width:640px)" },
       { src: "/bg-480.webm",  type: "video/webm" },
-      // MP4 fallback (Safari)
+      // MP4 (H.264) fallback for iOS/Safari
       { src: "/bg-1080.mp4",  type: "video/mp4",  media: "(min-width:1280px)" },
       { src: "/bg-720.mp4",   type: "video/mp4",  media: "(min-width:640px)" },
       { src: "/bg-480.mp4",   type: "video/mp4" },
     ];
   }, [sources]);
 
+  // Try to autoplay on mount and when sources load
+  useEffect(() => {
+    const v = vidRef.current;
+    if (!v) return;
+    // iOS can require the property to be set imperatively *before* play()
+    v.muted = true;
+    v.playsInline = true;
+
+    const tryPlay = async () => {
+      try {
+        await v.play();
+        setBlocked(false);
+        setReady(true);
+      } catch {
+        // Autoplay blocked → show the tap overlay
+        setBlocked(true);
+        setReady(false);
+      }
+    };
+
+    // If metadata already loaded, play immediately; otherwise on canplay
+    if (v.readyState >= 2) tryPlay();
+    else {
+      const onCanPlay = () => tryPlay();
+      v.addEventListener("canplay", onCanPlay, { once: true });
+      return () => v.removeEventListener("canplay", onCanPlay);
+    }
+  }, [srcSet]);
+
   // Lightweight particles (disabled on small screens / reduced-motion)
   useEffect(() => {
-    const reduced =
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+    const reduce =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ||
       window.innerWidth < 1024;
-    if (reduced) return;
+    if (reduce) return;
 
     const c = canvasRef.current;
     if (!c) return;
@@ -101,31 +120,50 @@ export default function BackgroundFX({ sources }) {
     return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); };
   }, []);
 
+  const handleTapStart = async () => {
+    const v = vidRef.current;
+    if (!v) return;
+    try {
+      v.muted = true;
+      v.playsInline = true;
+      await v.play();
+      setBlocked(false);
+      setReady(true);
+    } catch {
+      // keep overlay visible
+    }
+  };
+
   return (
-    <div
-      className="absolute inset-0 overflow-hidden"
-      // Solid Cyber Noir fallback while the video buffers (no JPG poster)
-      style={{ background: "#0B0F19" }}
-    >
-      {showVideo && (
-        <video
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
-            ready ? "opacity-100" : "opacity-0"
-          }`}
-          autoPlay
-          playsInline
-          muted
-          loop
-          preload="auto"
-          // mark ready as soon as possible for iOS/Safari
-          onLoadedData={() => setReady(true)}
-          onCanPlayThrough={() => setReady(true)}
-          onError={() => { setReady(false); setFailed(true); }}
+    <div className="absolute inset-0 overflow-hidden" style={{ background: "#0B0F19" }}>
+      <video
+        ref={vidRef}
+        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
+          ready ? "opacity-100" : "opacity-0"
+        }`}
+        autoPlay
+        muted
+        playsInline
+        loop
+        preload="auto"
+        onLoadedData={() => setReady(true)}
+      >
+        {srcSet.map((s) => (
+          <source key={s.src} src={s.src} type={s.type} {...(s.media ? { media: s.media } : {})} />
+        ))}
+      </video>
+
+      {/* Tap-to-start overlay if autoplay is blocked (common on iOS) */}
+      {blocked && (
+        <button
+          onClick={handleTapStart}
+          className="absolute inset-0 flex items-center justify-center bg-black/40 text-white"
+          aria-label="Start background animation"
         >
-          {srcSet.map((s) => (
-            <source key={s.src} src={s.src} type={s.type} {...(s.media ? { media: s.media } : {})} />
-          ))}
-        </video>
+          <span className="rounded-full px-4 py-2 backdrop-blur-sm bg-white/20 ring-1 ring-white/40">
+            Tap to enable animation
+          </span>
+        </button>
       )}
 
       {/* subtle hex overlay */}
