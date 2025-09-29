@@ -13,3 +13,11 @@
   for = "/bg-poster.jpg"
   [headers.values]
   Cache-Control = "public, max-age=31536000, immutable"
+[functions]
+  node_bundler = "esbuild"
+  included_files = []
+
+[[redirects]]
+  from = "/api/contact"
+  to   = "/.netlify/functions/contact"
+  status = 200

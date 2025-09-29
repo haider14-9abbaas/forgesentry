@@ -44,27 +44,18 @@
     <meta name="twitter:description" content="Professional cybersecurity and web development services engineered for outcomes." />
     <meta name="twitter:image" content="/og-forgesentry.png" />
 
-    <!-- reCAPTCHA v3 (keep your key in env at build time if possible) -->
-    <script src="https://www.google.com/recaptcha/api.js?render=YOUR_SITE_KEY" async defer></script>
+    <!-- reCAPTCHA v3 -->
+    <script
+      src="https://www.google.com/recaptcha/api.js?render=6LeeRdkrAAAAADlgNzKKzk-AfXfpfftmXghVhgDP"
+      async
+      defer
+    ></script>
 
-    <!-- ===== Performance Hints ===== -->
-    <!-- 1) Poster loads instantly while video buffers -->
-    <link
-      rel="preload"
-      as="image"
-      href="/bg-poster.jpg"
-      imagesrcset="/bg-poster.jpg"
-      fetchpriority="high"
-    />
-
-    <!-- 2) Preload video variants (first visit feels faster). Keep both formats. -->
-    <!-- Desktop -->
+    <!-- (Optional) Performance hints -->
     <link rel="preload" as="video" href="/bg-1080.webm" type="video/webm" crossorigin />
     <link rel="preload" as="video" href="/bg-1080.mp4"  type="video/mp4"  crossorigin />
-    <!-- Laptop / Tablet -->
     <link rel="preload" as="video" href="/bg-720.webm"  type="video/webm" crossorigin />
     <link rel="preload" as="video" href="/bg-720.mp4"   type="video/mp4"  crossorigin />
-    <!-- Mobile -->
     <link rel="preload" as="video" href="/bg-480.webm"  type="video/webm" crossorigin />
     <link rel="preload" as="video" href="/bg-480.mp4"   type="video/mp4"  crossorigin />
   </head>
