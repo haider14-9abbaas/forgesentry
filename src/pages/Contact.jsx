@@ -16,7 +16,7 @@ import {
   Loader2,
   MessageCircle,
 } from 'lucide-react'
-import SectionHeader from '../components/SectionHeader'
+// import SectionHeader from '../components/SectionHeader' // (unused)
 import WhatsAppButton from '../components/WhatsAppButton'
 
 /* -------------------- validation -------------------- */
@@ -30,22 +30,17 @@ const contactSchema = z.object({
   consent: z.boolean().refine((v) => v === true, 'You must agree to the terms'),
 })
 
-/* Your reCAPTCHA SITE key (safe for client) */
+/** Your reCAPTCHA SITE key (safe for client) */
 const SITE_KEY = '6LeeRdkrAAAAADlgNzKKzk-AfXfpfftmXghVhgDP'
 
 const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState(null) // 'success' | 'error' | null
-  const [csrfToken, setCsrfToken] = useState('')
   const [serverError, setServerError] = useState('')
+  const [csrfToken, setCsrfToken] = useState('')
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-    watch,
-  } = useForm({ resolver: zodResolver(contactSchema) })
+  const { register, handleSubmit, reset, formState: { errors }, watch } =
+    useForm({ resolver: zodResolver(contactSchema) })
 
   const messageLength = watch('message')?.length || 0
 
@@ -98,7 +93,7 @@ const Contact = () => {
     },
   ]
 
-  /* -------------------- CSRF token -------------------- */
+  // CSRF cookie (SameSite=Strict, Secure on https)
   useEffect(() => {
     const token = Math.random().toString(36).slice(2, 11)
     setCsrfToken(token)
@@ -106,7 +101,6 @@ const Contact = () => {
     document.cookie = `fs_csrf=${token}; SameSite=Strict; Path=/;${secure}`
   }, [])
 
-  /* -------------------- reCAPTCHA helper -------------------- */
   async function getRecaptchaToken() {
     if (!SITE_KEY || !window.grecaptcha) return 'dev'
     try {
@@ -117,7 +111,6 @@ const Contact = () => {
     }
   }
 
-  /* -------------------- submit handler -------------------- */
   const onSubmit = async (data) => {
     if (isSubmitting) return
     setIsSubmitting(true)
@@ -229,9 +222,7 @@ const Contact = () => {
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
                 <div>
-                  <label className="label">
-                    <span className="label-text font-medium">Full Name *</span>
-                  </label>
+                  <label className="label"><span className="label-text font-medium">Full Name *</span></label>
                   <input
                     {...register('fullName')}
                     type="text"
@@ -239,17 +230,11 @@ const Contact = () => {
                     placeholder="Your full name"
                     autoComplete="name"
                   />
-                  {errors.fullName && (
-                    <label className="label">
-                      <span className="label-text-alt text-error">{errors.fullName.message}</span>
-                    </label>
-                  )}
+                  {errors.fullName && <label className="label"><span className="label-text-alt text-error">{errors.fullName.message}</span></label>}
                 </div>
 
                 <div>
-                  <label className="label">
-                    <span className="label-text font-medium">Email Address *</span>
-                  </label>
+                  <label className="label"><span className="label-text font-medium">Email Address *</span></label>
                   <input
                     {...register('email')}
                     type="email"
@@ -257,17 +242,11 @@ const Contact = () => {
                     placeholder="your.email@company.com"
                     autoComplete="email"
                   />
-                  {errors.email && (
-                    <label className="label">
-                      <span className="label-text-alt text-error">{errors.email.message}</span>
-                    </label>
-                  )}
+                  {errors.email && <label className="label"><span className="label-text-alt text-error">{errors.email.message}</span></label>}
                 </div>
 
                 <div>
-                  <label className="label">
-                    <span className="label-text font-medium">Company (Optional)</span>
-                  </label>
+                  <label className="label"><span className="label-text font-medium">Company (Optional)</span></label>
                   <input
                     {...register('company')}
                     type="text"
@@ -278,47 +257,27 @@ const Contact = () => {
                 </div>
 
                 <div>
-                  <label className="label">
-                    <span className="label-text font-medium">Budget Range *</span>
-                  </label>
+                  <label className="label"><span className="label-text font-medium">Budget Range *</span></label>
                   <select
                     {...register('budget')}
                     className={`select select-bordered w-full ${errors.budget ? 'select-error' : ''}`}
                   >
                     <option value="">Select budget range</option>
-                    {budgetRanges.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
+                    {budgetRanges.map((r) => <option key={r} value={r}>{r}</option>)}
                   </select>
-                  {errors.budget && (
-                    <label className="label">
-                      <span className="label-text-alt text-error">{errors.budget.message}</span>
-                    </label>
-                  )}
+                  {errors.budget && <label className="label"><span className="label-text-alt text-error">{errors.budget.message}</span></label>}
                 </div>
 
                 <div>
-                  <label className="label">
-                    <span className="label-text font-medium">How can we help? *</span>
-                  </label>
+                  <label className="label"><span className="label-text font-medium">How can we help? *</span></label>
                   <select
                     {...register('reason')}
                     className={`select select-bordered w-full ${errors.reason ? 'select-error' : ''}`}
                   >
                     <option value="">Select a reason</option>
-                    {contactReasons.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
+                    {contactReasons.map((r) => <option key={r} value={r}>{r}</option>)}
                   </select>
-                  {errors.reason && (
-                    <label className="label">
-                      <span className="label-text-alt text-error">{errors.reason.message}</span>
-                    </label>
-                  )}
+                  {errors.reason && <label className="label"><span className="label-text-alt text-error">{errors.reason.message}</span></label>}
                 </div>
 
                 <div>
@@ -331,11 +290,7 @@ const Contact = () => {
                     className={`textarea textarea-bordered w-full h-32 ${errors.message ? 'textarea-error' : ''}`}
                     placeholder="Tell us about your project, goals, timeline, or any specific requirements..."
                   />
-                  {errors.message && (
-                    <label className="label">
-                      <span className="label-text-alt text-error">{errors.message.message}</span>
-                    </label>
-                  )}
+                  {errors.message && <label className="label"><span className="label-text-alt text-error">{errors.message.message}</span></label>}
                 </div>
 
                 <div className="form-control">
@@ -345,15 +300,9 @@ const Contact = () => {
                       type="checkbox"
                       className={`checkbox mr-3 ${errors.consent ? 'checkbox-error' : 'checkbox-primary'}`}
                     />
-                    <span className="label-text">
-                      I agree to the processing of my data and consent to be contacted about this inquiry. *
-                    </span>
+                    <span className="label-text">I agree to the processing of my data and consent to be contacted about this inquiry. *</span>
                   </label>
-                  {errors.consent && (
-                    <label className="label">
-                      <span className="label-text-alt text-error">{errors.consent.message}</span>
-                    </label>
-                  )}
+                  {errors.consent && <label className="label"><span className="label-text-alt text-error">{errors.consent.message}</span></label>}
                 </div>
 
                 <button
@@ -363,15 +312,7 @@ const Contact = () => {
                   style={{ backgroundColor: 'var(--cn-cyan)', borderColor: 'var(--cn-cyan)', color: '#0f172a' }}
                   aria-busy={isSubmitting}
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 size={20} className="animate-spin" /> Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Send size={20} /> Send Message
-                    </>
-                  )}
+                  {isSubmitting ? (<><Loader2 size={20} className="animate-spin" /> Sending...</>) : (<><Send size={20} /> Send Message</>)}
                 </button>
 
                 <div className="divider">OR</div>
@@ -394,30 +335,20 @@ const Contact = () => {
             </motion.div>
 
             {/* Sidebar */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="space-y-8"
-            >
+            <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="space-y-8">
               {/* Contact info */}
               <div className="card rounded-2xl bg-white border border-slate-200 p-8">
                 <h3 className="text-xl font-display font-semibold text-slate-900 mb-6">Contact Information</h3>
                 <div className="space-y-4">
                   {contactInfo.map((info, i) => (
                     <div key={i} className="flex items-center space-x-4">
-                      <div
-                        className="flex items-center justify-center w-12 h-12 rounded-lg"
-                        style={{ backgroundColor: 'rgba(34,211,238,0.12)' }}
-                      >
+                      <div className="flex items-center justify-center w-12 h-12 rounded-lg" style={{ backgroundColor: 'rgba(34,211,238,0.12)' }}>
                         <info.icon className="h-5 w-5" style={{ color: 'var(--cn-cyan)' }} />
                       </div>
                       <div>
                         <div className="font-medium text-slate-900">{info.label}</div>
                         {info.link ? (
-                          <a href={info.link} className="text-slate-600 hover:text-[var(--cn-cyan)] transition-colors">
-                            {info.value}
-                          </a>
+                          <a href={info.link} className="text-slate-600 hover:text-[var(--cn-cyan)] transition-colors">{info.value}</a>
                         ) : (
                           <div className="text-slate-600">{info.value}</div>
                         )}
@@ -429,9 +360,7 @@ const Contact = () => {
 
               {/* Founders */}
               <div className="card rounded-2xl bg-white border border-slate-200 p-8">
-                <h3 className="text-xl font-display font-semibold text-slate-900 mb-6">
-                  Connect with Our Team
-                </h3>
+                <h3 className="text-xl font-display font-semibold text-slate-900 mb-6">Connect with Our Team</h3>
                 <div className="space-y-6">
                   {founders.map((f, i) => (
                     <div key={i} className="flex items-center justify-between">
@@ -440,24 +369,10 @@ const Contact = () => {
                         <div className="text-sm text-slate-600">{f.role}</div>
                       </div>
                       <div className="flex space-x-2">
-                        <a
-                          href={f.linkedin}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 bg-slate-100 rounded-lg hover:text-white transition-colors duration-200"
-                          style={{ border: '1px solid #e5e7eb' }}
-                          aria-label={`${f.name}'s LinkedIn`}
-                        >
+                        <a href={f.linkedin} target="_blank" rel="noopener noreferrer" className="p-2 bg-slate-100 rounded-lg hover:text-white transition-colors duration-200" style={{ border: '1px solid #e5e7eb' }} aria-label={`${f.name}'s LinkedIn`}>
                           <Linkedin size={16} />
                         </a>
-                        <a
-                          href={f.github}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 bg-slate-100 rounded-lg hover:text-white transition-colors duration-200"
-                          style={{ border: '1px solid #e5e7eb' }}
-                          aria-label={`${f.name}'s GitHub`}
-                        >
+                        <a href={f.github} target="_blank" rel="noopener noreferrer" className="p-2 bg-slate-100 rounded-lg hover:text-white transition-colors duration-200" style={{ border: '1px solid #e5e7eb' }} aria-label={`${f.name}'s GitHub`}>
                           <Github size={16} />
                         </a>
                       </div>
@@ -468,36 +383,23 @@ const Contact = () => {
 
               {/* FAQ */}
               <div className="card rounded-2xl bg-white border border-slate-200 p-8">
-                <h3 className="text-xl font-display font-semibold text-slate-900 mb-6">
-                  Frequently Asked Questions
-                </h3>
+                <h3 className="text-xl font-display font-semibold text-slate-900 mb-6">Frequently Asked Questions</h3>
                 <div className="space-y-4">
                   <div>
                     <h4 className="font-medium text-slate-900 mb-2">How quickly will you respond?</h4>
-                    <p className="text-sm text-slate-600">
-                      WhatsApp messages get instant responses during business hours. Email inquiries are answered within
-                      24 hours.
-                    </p>
+                    <p className="text-sm text-slate-600">WhatsApp messages get instant responses during business hours. Email inquiries are answered within 24 hours.</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-slate-900 mb-2">Do you offer free consultations?</h4>
-                    <p className="text-sm text-slate-600">
-                      Yes, we offer free initial consultations to understand your needs and provide recommendations.
-                    </p>
+                    <p className="text-sm text-slate-600">Yes, we offer free initial consultations to understand your needs and provide recommendations.</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-slate-900 mb-2">Can I reach you on WhatsApp?</h4>
-                    <p className="text-sm text-slate-600">
-                      Absolutely! WhatsApp is our preferred communication method for quick discussions and project
-                      updates.
-                    </p>
+                    <p className="text-sm text-slate-600">Absolutely! WhatsApp is our preferred communication method for quick discussions and project updates.</p>
                   </div>
                   <div>
                     <h4 className="font-medium text-slate-900 mb-2">What information should I include?</h4>
-                    <p className="text-sm text-slate-600">
-                      Include your project goals, timeline, budget range, and any specific requirements or challenges
-                      you're facing.
-                    </p>
+                    <p className="text-sm text-slate-600">Include your project goals, timeline, budget range, and any specific requirements or challenges you're facing.</p>
                   </div>
                 </div>
               </div>
