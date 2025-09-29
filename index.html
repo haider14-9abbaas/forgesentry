@@ -2,35 +2,76 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ForgeSentry Professional Agency Website</title>
+
+    <!-- Icons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ForgeSentry Professional Agency Website</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://www.google.com/recaptcha/api.js?render=YOUR_SITE_KEY" async defer></script>
-    <meta name="description" content="Professional cybersecurity and web development services. Secure MERN development, automation, and digital solutions engineered for results.">
-    <meta name="keywords" content="cybersecurity, web development, MERN stack, automation, security consulting, React development">
-    <meta name="author" content="ForgeSentry">
-    <link rel="canonical" href="https://forgesentry.com/">
-    
+    <meta name="theme-color" content="#0B0F19" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- SEO -->
+    <meta
+      name="description"
+      content="Professional cybersecurity and web development services. Secure MERN development, automation, and digital solutions engineered for results."
+    />
+    <meta
+      name="keywords"
+      content="cybersecurity, web development, MERN stack, automation, security consulting, React development"
+    />
+    <meta name="author" content="ForgeSentry" />
+    <link rel="canonical" href="https://forgesentry.com/" />
+
     <!-- Open Graph -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="ForgeSentry - Secure Web & Automation Solutions">
-    <meta property="og:description" content="Professional cybersecurity and web development services engineered for outcomes.">
-    <meta property="og:image" content="/og-forgesentry.png">
-    <meta property="og:url" content="https://forgesentry.com/">
-    <meta property="og:site_name" content="ForgeSentry">
-    
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="ForgeSentry - Secure Web & Automation Solutions" />
+    <meta property="og:description" content="Professional cybersecurity and web development services engineered for outcomes." />
+    <meta property="og:image" content="/og-forgesentry.png" />
+    <meta property="og:url" content="https://forgesentry.com/" />
+    <meta property="og:site_name" content="ForgeSentry" />
+
     <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="ForgeSentry - Secure Web & Automation Solutions">
-    <meta name="twitter:description" content="Professional cybersecurity and web development services engineered for outcomes.">
-    <meta name="twitter:image" content="/og-forgesentry.png">
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ForgeSentry - Secure Web & Automation Solutions" />
+    <meta name="twitter:description" content="Professional cybersecurity and web development services engineered for outcomes." />
+    <meta name="twitter:image" content="/og-forgesentry.png" />
+
+    <!-- reCAPTCHA v3 (keep your key in env at build time if possible) -->
+    <script src="https://www.google.com/recaptcha/api.js?render=YOUR_SITE_KEY" async defer></script>
+
+    <!-- ===== Performance Hints ===== -->
+    <!-- 1) Poster loads instantly while video buffers -->
+    <link
+      rel="preload"
+      as="image"
+      href="/bg-poster.jpg"
+      imagesrcset="/bg-poster.jpg"
+      fetchpriority="high"
+    />
+
+    <!-- 2) Preload video variants (first visit feels faster). Keep both formats. -->
+    <!-- Desktop -->
+    <link rel="preload" as="video" href="/bg-1080.webm" type="video/webm" crossorigin />
+    <link rel="preload" as="video" href="/bg-1080.mp4"  type="video/mp4"  crossorigin />
+    <!-- Laptop / Tablet -->
+    <link rel="preload" as="video" href="/bg-720.webm"  type="video/webm" crossorigin />
+    <link rel="preload" as="video" href="/bg-720.mp4"   type="video/mp4"  crossorigin />
+    <!-- Mobile -->
+    <link rel="preload" as="video" href="/bg-480.webm"  type="video/webm" crossorigin />
+    <link rel="preload" as="video" href="/bg-480.mp4"   type="video/mp4"  crossorigin />
   </head>
+
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <noscript>JavaScript is required to run this app.</noscript>
   </body>
 </html>

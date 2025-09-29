@@ -1,30 +1,40 @@
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-const canUseVideo = () => {
-  if (typeof window === "undefined" || !window.matchMedia) return true;
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const saveData     = window.matchMedia("(prefers-reduced-data: reduce)").matches;
-  // Allow on all widths; only block for motion/data preferences
-  return !reduceMotion && !saveData;
-};
+const canUseVideo = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia &&
+  !window.matchMedia("(prefers-reduced-motion: reduce)").matches &&
+  !window.matchMedia("(prefers-reduced-data: reduce)").matches &&
+  window.innerWidth >= 400; // allow video on phones ≥ 400px wide
 
 export default function BackgroundFX({ sources }) {
   const canvasRef = useRef(null);
+  const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
 
+  const allowVideo = typeof window !== "undefined" && canUseVideo();
+  const showVideo = allowVideo && !failed;
+
+  // Responsive sources: browser picks the first matching <source>
   const srcSet = useMemo(() => {
     if (sources && sources.length) return sources;
     return [
-      { src: "/bg.webm", type: "video/webm" },   // Android/Chrome
-      { src: "/bg.mp4",  type: "video/mp4"  },   // iOS/Safari (no WebM)
+      // WebM (preferred for Chrome/Edge/Firefox)
+      { src: "/bg-1080.webm", type: "video/webm", media: "(min-width:1280px)" },
+      { src: "/bg-720.webm",  type: "video/webm", media: "(min-width:640px)" },
+      { src: "/bg-480.webm",  type: "video/webm" },
+      // MP4 (fallback for Safari)
+      { src: "/bg-1080.mp4",  type: "video/mp4",  media: "(min-width:1280px)" },
+      { src: "/bg-720.mp4",   type: "video/mp4",  media: "(min-width:640px)" },
+      { src: "/bg-480.mp4",   type: "video/mp4" },
     ];
   }, [sources]);
 
-  // particles (unchanged, trimmed)
+  // (Particles — keep your existing lighter version)
   useEffect(() => {
     const reduced =
-      (typeof window !== "undefined" &&
-        (window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-         window.matchMedia("(prefers-reduced-data: reduce)").matches));
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      window.innerWidth < 1024;
 
     if (reduced) return;
 
@@ -32,13 +42,14 @@ export default function BackgroundFX({ sources }) {
     if (!c) return;
     const ctx = c.getContext("2d");
     let raf, W, H, DPR;
-
     const points = [];
+
     const init = () => {
       DPR = Math.min(2, window.devicePixelRatio || 1);
       W = c.clientWidth * DPR;
       H = c.clientHeight * DPR;
-      c.width = W; c.height = H;
+      c.width = W;
+      c.height = H;
       points.length = 0;
       const density = Math.floor((W * H) / (140000 * DPR));
       for (let i = 0; i < density; i++) {
@@ -88,43 +99,65 @@ export default function BackgroundFX({ sources }) {
     tick();
     const onResize = () => init();
     window.addEventListener("resize", onResize);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); };
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onResize);
+    };
   }, []);
 
-  const showVideo = canUseVideo();
+  // Safety: if the video takes unusually long, keep poster visible (no flash)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // If not ready after ~4.5s, just keep poster; don't flip to video to avoid pop-in
+      if (!ready) setFailed((f) => f || false); // no-op but keeps clear intent
+    }, 4500);
+    return () => clearTimeout(timer);
+  }, [ready]);
 
   return (
     <div className="absolute inset-0 overflow-hidden">
-      {/* 1) Background video – now allowed on mobile */}
+      {/* 1) Poster — shows immediately, fades when video is ready */}
+      <img
+        src="/bg-poster.jpg"
+        alt=""
+        aria-hidden="true"
+        decoding="async"
+        fetchPriority="high"
+        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
+          ready ? "opacity-0" : "opacity-100"
+        }`}
+      />
+
+      {/* 2) Video — only render if allowed, and we didn't fail */}
       {showVideo && (
         <video
-          className="bgfx-video absolute inset-0 w-full h-full object-cover"
-          // iOS autoplay requirements:
-          muted
-          playsInline
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
+            ready ? "opacity-100" : "opacity-0"
+          }`}
           autoPlay
+          playsInline
+          muted
           loop
           preload="auto"
           poster="/bg-poster.jpg"
-          // try to start playback programmatically (some browsers need a nudge)
-          ref={(el) => {
-            if (el) {
-              const play = () => el.play().catch(() => {});
-              // on mount and when tab becomes active
-              requestAnimationFrame(play);
-              document.addEventListener("visibilitychange", () => {
-                if (document.visibilityState === "visible") play();
-              }, { once: true });
-            }
+          // ready when browser can play through without stalling
+          onCanPlayThrough={() => setReady(true)}
+          onLoadedData={(e) => {
+            // Safari sometimes never fires canplaythrough; this is a softer gate
+            if (!ready) setReady(true);
+          }}
+          onError={() => {
+            setFailed(true);
+            setReady(false); // keep poster visible
           }}
         >
           {srcSet.map((s) => (
-            <source key={s.src} src={s.src} type={s.type} />
+            <source key={s.src} src={s.src} type={s.type} {...(s.media ? { media: s.media } : {})} />
           ))}
         </video>
       )}
 
-      {/* 2) Subtle hex overlay */}
+      {/* 3) Very subtle hex overlay */}
       <svg
         className="absolute inset-0 w-full h-full opacity-5 pointer-events-none"
         viewBox="0 0 800 600"
@@ -143,7 +176,7 @@ export default function BackgroundFX({ sources }) {
         <rect width="100%" height="100%" fill="url(#hex)" />
       </svg>
 
-      {/* 3) Particles */}
+      {/* 4) Particles */}
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
     </div>
   );
