@@ -37,13 +37,20 @@ const Navbar = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3 group">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl transition-transform duration-200 group-hover:scale-110"
-                 style={{ background: 'linear-gradient(135deg,var(--cn-cyan),var(--cn-purple))' }}>
+          <Link to="/" className="flex items-center space-x-3 group min-w-0">
+            <div
+              className="flex items-center justify-center w-10 h-10 rounded-xl transition-transform duration-200 group-hover:scale-110 flex-shrink-0"
+              style={{ background: 'linear-gradient(135deg,var(--cn-cyan),var(--cn-purple))' }}
+            >
               <Shield className="h-6 w-6 text-white" />
             </div>
-            <div className="hidden sm:block">
-              <span className="text-xl lg:text-2xl font-display font-bold text-[var(--cn-text)]">
+
+            {/* was: hidden sm:block  ->  make it visible on mobile and truncate if too narrow */}
+            <div className="block min-w-0">
+              <span
+                className="text-lg sm:text-xl lg:text-2xl font-display font-bold text-[var(--cn-text)] block truncate max-w-[140px] sm:max-w-none"
+                title="ForgeSentry"
+              >
                 Forge<span className="gradient-text animate-hue">Sentry</span>
               </span>
             </div>
