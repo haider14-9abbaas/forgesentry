@@ -4,19 +4,9 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
-  Mail,
-  MapPin,
-  Send,
-  CheckCircle,
-  AlertCircle,
-  Clock,
-  Shield,
-  Linkedin,
-  Github,
-  Loader2,
-  MessageCircle,
+  Mail, MapPin, Send, CheckCircle, AlertCircle, Clock, Shield,
+  Linkedin, Github, Loader2, MessageCircle,
 } from 'lucide-react'
-// import SectionHeader from '../components/SectionHeader' // (unused)
 import WhatsAppButton from '../components/WhatsAppButton'
 
 /* -------------------- validation -------------------- */
@@ -28,19 +18,50 @@ const contactSchema = z.object({
   reason: z.string().min(1, 'Please select a reason for contact'),
   message: z.string().min(30, 'Message must be at least 30 characters'),
   consent: z.boolean().refine((v) => v === true, 'You must agree to the terms'),
+  // honeypot; bots will fill this, humans won’t
+  website: z.string().optional(),
 })
 
 /** Your reCAPTCHA SITE key (safe for client) */
 const SITE_KEY = '6LeeRdkrAAAAADlgNzKKzk-AfXfpfftmXghVhgDP'
 
+type FormValues = z.infer<typeof contactSchema>
+
+/** Decide which endpoint to use. In prod, /api/contact is redirected.
+ * In raw Vite dev (without `netlify dev`), fall back to the Functions path.
+ */
+async function postContact(payload: any) {
+  const tryOnce = async (url: string) => {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    return res
+  }
+
+  // 1) Normal SPA route (works in production if redirects are set)
+  let res = await tryOnce('/api/contact')
+  if (res.status === 404) {
+    // 2) Fallback to the direct Functions mount (helpful during local Vite dev)
+    res = await tryOnce('/.netlify/functions/contact')
+  }
+  return res
+}
+
 const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState(null) // 'success' | 'error' | null
+  const [submitStatus, setSubmitStatus] = useState<null | 'success' | 'error'>(null)
   const [serverError, setServerError] = useState('')
   const [csrfToken, setCsrfToken] = useState('')
 
-  const { register, handleSubmit, reset, formState: { errors }, watch } =
-    useForm({ resolver: zodResolver(contactSchema) })
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+    watch,
+  } = useForm<FormValues>({ resolver: zodResolver(contactSchema) })
 
   const messageLength = watch('message')?.length || 0
 
@@ -102,36 +123,48 @@ const Contact = () => {
   }, [])
 
   async function getRecaptchaToken() {
-    if (!SITE_KEY || !window.grecaptcha) return 'dev'
+    const g = (window as any).grecaptcha
+    if (!SITE_KEY || !g?.ready || !g?.execute) return 'dev'
     try {
-      await window.grecaptcha.ready?.()
-      return await window.grecaptcha.execute(SITE_KEY, { action: 'contact' })
+      await g.ready()
+      return await g.execute(SITE_KEY, { action: 'contact' })
     } catch {
       return 'dev'
     }
   }
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: FormValues) => {
     if (isSubmitting) return
     setIsSubmitting(true)
     setSubmitStatus(null)
     setServerError('')
 
+    // Honeypot: if filled, silently succeed
+    if (data.website && data.website.trim().length > 0) {
+      setSubmitStatus('success')
+      setIsSubmitting(false)
+      reset()
+      return
+    }
+
     try {
       const recaptchaToken = await getRecaptchaToken()
 
-      const res = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken,
-        },
-        body: JSON.stringify({ ...data, recaptchaToken }),
+      const res = await postContact({
+        ...data,
+        recaptchaToken,
+        headers: { 'X-CSRF-Token': csrfToken }, // forwarded by the function if you read it
       })
 
-      const json = await res.json().catch(() => ({}))
+      let json: any = {}
+      try {
+        json = await res.clone().json()
+      } catch {
+        /* ignore non-JSON */
+      }
+
       if (!res.ok) {
-        const msg = json?.error || 'Failed to send message'
+        const msg = json?.error || `Request failed (${res.status})`
         setServerError(msg)
         throw new Error(msg)
       }
@@ -145,8 +178,9 @@ const Contact = () => {
         reason: '',
         message: '',
         consent: false,
+        website: '',
       })
-    } catch (e) {
+    } catch (e: any) {
       console.error(e)
       setSubmitStatus('error')
     } finally {
@@ -221,6 +255,16 @@ const Contact = () => {
               )}
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+                {/* Honeypot (hidden from users) */}
+                <input
+                  {...register('website')}
+                  type="text"
+                  autoComplete="off"
+                  tabIndex={-1}
+                  className="hidden"
+                  aria-hidden="true"
+                />
+
                 <div>
                   <label className="label"><span className="label-text font-medium">Full Name *</span></label>
                   <input
