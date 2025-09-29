@@ -1,3 +1,4 @@
+// src/pages/Contact.jsx
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useForm } from 'react-hook-form'
@@ -25,43 +26,32 @@ const contactSchema = z.object({
 /** Your reCAPTCHA SITE key (safe for client) */
 const SITE_KEY = '6LeeRdkrAAAAADlgNzKKzk-AfXfpfftmXghVhgDP'
 
-type FormValues = z.infer<typeof contactSchema>
-
-/** Decide which endpoint to use. In prod, /api/contact is redirected.
- * In raw Vite dev (without `netlify dev`), fall back to the Functions path.
- */
-async function postContact(payload: any) {
-  const tryOnce = async (url: string) => {
-    const res = await fetch(url, {
+/** POST helper. Tries /api/contact first (prod), then falls back to Functions path (dev). */
+async function postContact(payload, csrfToken) {
+  const tryOnce = async (url) => {
+    return fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-CSRF-Token': csrfToken, // <-- IMPORTANT: header, not body
+      },
       body: JSON.stringify(payload),
     })
-    return res
   }
-
-  // 1) Normal SPA route (works in production if redirects are set)
   let res = await tryOnce('/api/contact')
-  if (res.status === 404) {
-    // 2) Fallback to the direct Functions mount (helpful during local Vite dev)
-    res = await tryOnce('/.netlify/functions/contact')
-  }
+  if (res.status === 404) res = await tryOnce('/.netlify/functions/contact')
   return res
 }
 
 const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState<null | 'success' | 'error'>(null)
+  const [submitStatus, setSubmitStatus] = useState(null) // 'success' | 'error' | null
   const [serverError, setServerError] = useState('')
   const [csrfToken, setCsrfToken] = useState('')
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-    watch,
-  } = useForm<FormValues>({ resolver: zodResolver(contactSchema) })
+  const { register, handleSubmit, reset, formState: { errors }, watch } =
+    useForm({ resolver: zodResolver(contactSchema) })
 
   const messageLength = watch('message')?.length || 0
 
@@ -123,7 +113,7 @@ const Contact = () => {
   }, [])
 
   async function getRecaptchaToken() {
-    const g = (window as any).grecaptcha
+    const g = window.grecaptcha
     if (!SITE_KEY || !g?.ready || !g?.execute) return 'dev'
     try {
       await g.ready()
@@ -133,7 +123,7 @@ const Contact = () => {
     }
   }
 
-  const onSubmit = async (data: FormValues) => {
+  const onSubmit = async (data) => {
     if (isSubmitting) return
     setIsSubmitting(true)
     setSubmitStatus(null)
@@ -150,18 +140,13 @@ const Contact = () => {
     try {
       const recaptchaToken = await getRecaptchaToken()
 
-      const res = await postContact({
-        ...data,
-        recaptchaToken,
-        headers: { 'X-CSRF-Token': csrfToken }, // forwarded by the function if you read it
-      })
+      const res = await postContact(
+        { ...data, recaptchaToken },
+        csrfToken
+      )
 
-      let json: any = {}
-      try {
-        json = await res.clone().json()
-      } catch {
-        /* ignore non-JSON */
-      }
+      let json = {}
+      try { json = await res.clone().json() } catch {}
 
       if (!res.ok) {
         const msg = json?.error || `Request failed (${res.status})`
@@ -180,7 +165,7 @@ const Contact = () => {
         consent: false,
         website: '',
       })
-    } catch (e: any) {
+    } catch (e) {
       console.error(e)
       setSubmitStatus('error')
     } finally {
@@ -255,7 +240,7 @@ const Contact = () => {
               )}
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
-                {/* Honeypot (hidden from users) */}
+                {/* Honeypot (hidden) */}
                 <input
                   {...register('website')}
                   type="text"
