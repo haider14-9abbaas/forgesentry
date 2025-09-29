@@ -4,12 +4,19 @@
   publish   = "dist"
   functions = "netlify/functions"
 
-# === Functions config ===
+# Use Node 18 for the whole build & functions
+[build.environment]
+  NODE_VERSION = "18"
+
+# === Functions (global defaults) ===
 [functions]
   node_bundler          = "esbuild"
-  node_version          = "18"
-  # Not strictly required, but keeps esbuild happy with native deps
+  # keep nodemailer external so the bundler doesn’t try to inline it
   external_node_modules = ["nodemailer"]
+
+# If you ever need per-function settings, you can add:
+# [functions."contact"]
+#   included_files = []
 
 # === Long-cache headers for media ===
 [[headers]]
@@ -27,8 +34,7 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# === API route -> Netlify Function ===
-# Put this BEFORE the SPA fallback
+# === API route -> Netlify Function (place BEFORE SPA fallback) ===
 [[redirects]]
   from   = "/api/contact"
   to     = "/.netlify/functions/contact"
