@@ -17,12 +17,16 @@ import {
 import SectionHeader from '../components/SectionHeader';
 import WhatsAppButton from '../components/WhatsAppButton';
 
+// ✅ import images instead of using "/src/..."
+import haiderImg from '../assets/haider.png';
+import hamzaImg  from '../assets/hamza.png';
+
 const About = () => {
   const founders = [
     {
       name: 'Syed Haider Abbas Zaidi',
       role: 'Cybersecurity Professional & MERN Developer',
-      image: '/src/assets/haider.png',
+      image: haiderImg, // ✅
       linkedin: 'https://www.linkedin.com/in/syed-haider-abbas-zaidi-132525215/',
       github: 'https://github.com/haider14-9abbaas',
       bio: 'Cybersecurity expert with extensive experience in MERN stack development. Specializes in building secure, scalable applications with a focus on threat modeling and security implementation. Currently pursuing BS in Cybersecurity (expected 2027).',
@@ -32,7 +36,7 @@ const About = () => {
     {
       name: 'Hamza Kamran',
       role: 'Cybersecurity & Full-Stack Developer',
-      image: '/src/assets/hamza.png',
+      image: hamzaImg, // ✅
       linkedin: 'https://www.linkedin.com/in/hamza-kamran-271872297/',
       github: 'https://github.com/Hamza-hani',
       bio: 'Full-stack developer with strong cybersecurity background. Expert in creating secure application architectures and implementing robust authentication systems. Passionate about automation and AI integration.',
@@ -154,6 +158,7 @@ const About = () => {
                     alt={f.name}
                     className="w-32 h-32 rounded-full object-cover ring-4 shadow-xl mx-auto mb-6"
                     style={{ boxShadow: '0 18px 40px rgba(0,0,0,.18)', borderColor: 'var(--cn-cyan)' }}
+                    loading="lazy"
                   />
                   <h3 className="text-2xl font-display font-semibold text-slate-900 mb-2">{f.name}</h3>
                   <p className="font-medium mb-4" style={{ color: 'var(--cn-cyan)' }}>{f.role}</p>

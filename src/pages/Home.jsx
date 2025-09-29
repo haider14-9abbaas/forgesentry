@@ -24,6 +24,10 @@ import SectionHeader from '../components/SectionHeader';
 import TestimonialCard from '../components/TestimonialCard';
 import WhatsAppButton from '../components/WhatsAppButton';
 
+// ✅ import images from src/assets (Vite will bundle them correctly)
+import haiderImg from '../assets/haider.png';
+import hamzaImg  from '../assets/hamza.png';
+
 /* ===== minimal motion helpers (inline) ===== */
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -72,9 +76,24 @@ const Home = () => {
     { name: 'Emily Rodriguez', role: 'Founder', company: 'E-commerce Pro', rating: 5, content: 'Outstanding Shopify development work. ForgeSentry built us a high-converting store with advanced features. The results speak for themselves - 40% increase in conversions.', avatar: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1' },
   ];
 
+  // ✅ use imported images here
   const founders = [
-    { name: 'Syed Haider Abbas Zaidi', role: 'Cybersecurity Professional & MERN Developer', image: '/src/assets/haider.png', linkedin: 'https://www.linkedin.com/in/syed-haider-abbas-zaidi-132525215/', github: 'https://github.com/haider14-9abbaas', bio: 'Cybersecurity expert with extensive MERN stack development experience.' },
-    { name: 'Hamza Kamran', role: 'Cybersecurity & Full-Stack Developer', image: '/src/assets/hamza.png', linkedin: 'https://www.linkedin.com/in/hamza-kamran-271872297/', github: 'https://github.com/Hamza-hani', bio: 'Full-stack developer specializing in secure application architecture.' },
+    {
+      name: 'Syed Haider Abbas Zaidi',
+      role: 'Cybersecurity Professional & MERN Developer',
+      image: haiderImg,
+      linkedin: 'https://www.linkedin.com/in/syed-haider-abbas-zaidi-132525215/',
+      github: 'https://github.com/haider14-9abbaas',
+      bio: 'Cybersecurity expert with extensive MERN stack development experience.',
+    },
+    {
+      name: 'Hamza Kamran',
+      role: 'Cybersecurity & Full-Stack Developer',
+      image: hamzaImg,
+      linkedin: 'https://www.linkedin.com/in/hamza-kamran-271872297/',
+      github: 'https://github.com/Hamza-hani',
+      bio: 'Full-stack developer specializing in secure application architecture.',
+    },
   ];
 
   const { x, y } = useParallax(0.08);
@@ -205,7 +224,6 @@ const Home = () => {
             className="mb-12"
           />
 
-          {/* Center every card in the grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl mx-auto place-items-center">
             {founders.map((founder, index) => (
               <m.div
@@ -218,18 +236,19 @@ const Home = () => {
                 className="text-center"
               >
                 <div className="mb-6">
+                  {/* ✅ use founder.image (from imports) */}
                   <img
-                    src={index === 0 ? '/src/assets/haider.png' : '/src/assets/hamza.png'}
+                    src={founder.image}
                     alt={founder.name}
                     className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 rounded-full object-cover mx-auto ring-4"
                     style={{ boxShadow: '0 20px 45px rgba(0,0,0,.25)', borderColor: 'var(--cn-cyan)' }}
+                    loading="lazy"
                   />
                 </div>
                 <h3 className="text-xl font-display font-semibold text-slate-900 mb-2">{founder.name}</h3>
                 <p className="font-medium mb-4" style={{ color: 'var(--cn-cyan)' }}>{founder.role}</p>
                 <p className="text-slate-600 mb-6">{founder.bio}</p>
 
-                {/* High-contrast social buttons */}
                 <div className="flex items-center justify-center space-x-4">
                   <a
                     href={founder.linkedin}
