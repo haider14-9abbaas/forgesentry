@@ -1,23 +1,42 @@
-# netlify.toml
+# === Build/output ===
+[build]
+  command   = "npm run build"
+  publish   = "dist"
+  functions = "netlify/functions"
+
+# === Functions config ===
+[functions]
+  node_bundler          = "esbuild"
+  node_version          = "18"
+  # Not strictly required, but keeps esbuild happy with native deps
+  external_node_modules = ["nodemailer"]
+
+# === Long-cache headers for media ===
 [[headers]]
   for = "/bg-*.webm"
   [headers.values]
-  Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
   for = "/bg-*.mp4"
   [headers.values]
-  Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
   for = "/bg-poster.jpg"
   [headers.values]
-  Cache-Control = "public, max-age=31536000, immutable"
-[functions]
-  node_bundler = "esbuild"
-  included_files = []
+    Cache-Control = "public, max-age=31536000, immutable"
 
+# === API route -> Netlify Function ===
+# Put this BEFORE the SPA fallback
 [[redirects]]
-  from = "/api/contact"
-  to   = "/.netlify/functions/contact"
+  from   = "/api/contact"
+  to     = "/.netlify/functions/contact"
+  status = 200
+  force  = true
+
+# === SPA fallback (keep last) ===
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
   status = 200

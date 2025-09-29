@@ -1,165 +1,168 @@
 // netlify/functions/contact.js
-const nodemailer = require("nodemailer");
-const { z } = require("zod");
+import nodemailer from "nodemailer";
 
-// ---- CORS whitelist (comma-separated in env: ALLOWED_ORIGIN) ----
-const parseOrigins = () =>
-  (process.env.ALLOWED_ORIGIN || "")
-    .split(",")
-    .map(s => s.trim())
-    .filter(Boolean);
+/** Simple sanitiser to keep the email text safe */
+const clean = (v) =>
+  typeof v === "string"
+    ? v.replace(/[<>"]/g, (m) => ({ "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]))
+    : v;
 
-const corsHeaders = (origin) => ({
-  "Content-Type": "application/json",
-  "Access-Control-Allow-Origin": origin,
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, X-CSRF-Token",
-  "Referrer-Policy": "no-referrer",
-  "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY",
-  "X-XSS-Protection": "1; mode=block",
-});
-
-// ---- Validation schema ----
-const contactSchema = z.object({
-  fullName: z.string().min(2).max(100),
-  email: z.string().email().max(255),
-  company: z.string().max(100).optional(),
-  budget: z.string().min(1).max(50),
-  reason: z.string().min(1).max(100),
-  message: z.string().min(30).max(5000),
-  consent: z.boolean().refine(v => v === true, "Consent required"),
-  recaptchaToken: z.string().min(1),
-});
-
-// ---- Sanitizer ----
-const sanitize = (s) =>
-  typeof s === "string"
-    ? s.replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;")
-        .replace(/"/g,"&quot;")
-        .replace(/'/g,"&#x27;")
-        .replace(/\//g,"&#x2F;")
-    : s;
-
-// ---- reCAPTCHA v3 verify ----
-async function verifyRecaptcha(token, ip) {
+/** Verify reCAPTCHA v3 token on the server */
+async function verifyRecaptcha(token) {
   const secret = process.env.RECAPTCHA_SECRET;
   if (!secret) {
-    console.warn("reCAPTCHA secret missing – skipping verification (DEV)");
+    console.warn("RECAPTCHA_SECRET is not set; skipping verification.");
     return true;
   }
   try {
     const resp = await fetch("https://www.google.com/recaptcha/api/siteverify", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `secret=${encodeURIComponent(secret)}&response=${encodeURIComponent(token)}&remoteip=${encodeURIComponent(ip||"")}`,
+      body: new URLSearchParams({ secret, response: token }),
     });
     const data = await resp.json();
-    return !!(data.success && (data.score === undefined || data.score > 0.5));
-  } catch (e) {
-    console.error("reCAPTCHA error", e);
+    // accept if Google says success and score is good (fallback if score is missing)
+    return !!(data.success && (typeof data.score !== "number" || data.score > 0.5));
+  } catch (err) {
+    console.error("reCAPTCHA check failed:", err);
     return false;
   }
 }
 
-exports.handler = async (event) => {
-  const origins = parseOrigins();
-  const reqOrigin = event.headers.origin || "";
-  const allowOrigin = origins.includes(reqOrigin) ? reqOrigin : origins[0] || "*";
+/** Read CSRF token from cookie header */
+function getCsrfCookie(headers) {
+  const cookie = headers.get("cookie") || headers.get("Cookie") || "";
+  const match = cookie.split(";").map((c) => c.trim()).find((c) => c.startsWith("fs_csrf="));
+  return match ? match.split("=")[1] : "";
+}
 
-  // Preflight
+export const handler = async (event) => {
+  // CORS preflight
   if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 200, headers: corsHeaders(allowOrigin), body: "" };
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, X-CSRF-Token",
+      },
+      body: "",
+    };
   }
 
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, headers: corsHeaders(allowOrigin), body: JSON.stringify({ error: "Method not allowed" }) };
+    return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
   }
 
+  const ALLOWED = (process.env.ALLOWED_ORIGIN || "").split(",").map((s) => s.trim());
+  const origin = event.headers.origin || event.headers.Origin || "";
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": ALLOWED.includes(origin) ? origin : "*",
+    "Vary": "Origin",
+    "Content-Security-Policy":
+      "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+    "Referrer-Policy": "no-referrer",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+  };
+
   try {
-    const ip =
-      event.headers["x-nf-client-connection-ip"] ||
-      event.headers["client-ip"] ||
-      event.headers["x-forwarded-for"] ||
-      "unknown";
+    const body = JSON.parse(event.body || "{}");
 
-    const raw = JSON.parse(event.body || "{}");
-    const data = contactSchema.parse(raw);
-
-    // reCAPTCHA
-    const ok = await verifyRecaptcha(data.recaptchaToken, ip);
-    if (!ok) {
-      return { statusCode: 400, headers: corsHeaders(allowOrigin), body: JSON.stringify({ error: "reCAPTCHA failed" }) };
+    // CSRF check
+    const csrfHeader = event.headers["x-csrf-token"] || event.headers["X-CSRF-Token"];
+    const csrfCookie = getCsrfCookie(new Headers(event.headers));
+    if (!csrfHeader || !csrfCookie || csrfHeader !== csrfCookie) {
+      return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: "Invalid CSRF token" }) };
     }
 
-    // sanitize
-    const clean = Object.fromEntries(
-      Object.entries(data).map(([k, v]) => [k, typeof v === "string" ? sanitize(v) : v])
-    );
+    // Basic validation (keep it simple)
+    const required = ["fullName", "email", "budget", "reason", "message", "consent"];
+    for (const key of required) {
+      if (!(key in body)) {
+        return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: `Missing field: ${key}` }) };
+      }
+    }
+    if (!body.consent) {
+      return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: "Consent is required" }) };
+    }
+    if (String(body.message || "").length < 30) {
+      return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: "Message must be at least 30 characters" }) };
+    }
 
-    // Mailer (Gmail App Password – no spaces!)
+    // reCAPTCHA
+    const ok = await verifyRecaptcha(body.recaptchaToken || "");
+    if (!ok) {
+      return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: "reCAPTCHA verification failed" }) };
+    }
+
+    // nodemailer transporter (Gmail + App Password)
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || "smtp.gmail.com",
       port: Number(process.env.SMTP_PORT || 465),
       secure: true,
       auth: {
-        user: process.env.SMTP_USER,                 // e.g. forgesentry@gmail.com
-        pass: process.env.SMTP_PASS,                 // 16 chars, NO spaces
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS, // ← your 16-char app password (no spaces)
       },
     });
 
-    const text = `
-New Contact Form Submission — ForgeSentry
+    const safe = {
+      fullName: clean(body.fullName),
+      email: clean(body.email),
+      company: clean(body.company || "Not provided"),
+      budget: clean(body.budget),
+      reason: clean(body.reason),
+      message: clean(body.message),
+    };
 
-From: ${clean.fullName} <${clean.email}>
-Company: ${clean.company || "Not provided"}
-Budget: ${clean.budget}
-Inquiry Type: ${clean.reason}
-
-Message:
-${clean.message}
-
----
-Submitted: ${new Date().toISOString()}
-Client IP: ${ip}
-User Agent: ${event.headers["user-agent"] || "n/a"}
-`;
-
-    // Send to you
+    // Send to your inbox
     await transporter.sendMail({
       from: process.env.SMTP_USER,
       to: "forgesentry@gmail.com",
-      replyTo: clean.email,
-      subject: `New Contact: ${clean.reason} — ${clean.fullName}`,
-      text,
+      subject: `New Contact Form: ${safe.reason} — ${safe.fullName}`,
+      text: `New Contact Form Submission
+
+From: ${safe.fullName} <${safe.email}>
+Company: ${safe.company}
+Budget: ${safe.budget}
+Inquiry: ${safe.reason}
+
+Message:
+${safe.message}
+
+---
+Submitted: ${new Date().toISOString()}
+User-Agent: ${event.headers["user-agent"] || ""}
+IP: ${event.headers["x-forwarded-for"] || "unknown"}
+`,
+      replyTo: safe.email,
     });
 
-    // Confirmation to sender
+    // Confirmation for the sender
     await transporter.sendMail({
       from: process.env.SMTP_USER,
-      to: clean.email,
-      subject: "Thanks for contacting ForgeSentry",
-      text: `Hi ${clean.fullName},
+      to: safe.email,
+      subject: "Thank you for contacting ForgeSentry",
+      text: `Hi ${safe.fullName},
 
-Thanks for reaching out to ForgeSentry about "${clean.reason}".
-We’ll get back to you within 24 hours.
+Thanks for reaching out! We've received your inquiry about "${safe.reason}" and will get back to you within 24 hours.
 
-— ForgeSentry Team`,
+— The ForgeSentry Team
+(Automatic message)`,
     });
 
     return {
       statusCode: 200,
-      headers: corsHeaders(allowOrigin),
-      body: JSON.stringify({ success: true, message: "Message sent" }),
+      headers: corsHeaders,
+      body: JSON.stringify({ success: true, message: "Message sent successfully" }),
     };
   } catch (err) {
     console.error("Contact function error:", err);
-    const details = err?.issues || undefined; // zod errors
     return {
-      statusCode: 400,
-      headers: corsHeaders(allowOrigin),
-      body: JSON.stringify({ error: "Unable to send", details }),
+      statusCode: 500,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: "Internal server error" }),
     };
   }
 };
