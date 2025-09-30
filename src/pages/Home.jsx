@@ -28,7 +28,7 @@ import WhatsAppButton from '../components/WhatsAppButton';
 import haiderImg from '../assets/haider.png';
 import hamzaImg  from '../assets/hamza.png';
 
-/* ===== minimal motion helpers (inline) ===== */
+/* ===== motion helpers ===== */
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
@@ -38,7 +38,7 @@ const stagger = (gap = 0.08) => ({
   show: { transition: { staggerChildren: gap, delayChildren: 0.1 } },
 });
 
-/* ===== tiny parallax hook (inline) ===== */
+/* ===== tiny parallax hook ===== */
 function useParallax(multiplier = 0.08) {
   const [offset, set] = useState({ x: 0, y: 0 });
   useEffect(() => {
@@ -76,7 +76,6 @@ const Home = () => {
     { name: 'Emily Rodriguez', role: 'Founder', company: 'E-commerce Pro', rating: 5, content: 'Outstanding Shopify development work. ForgeSentry built us a high-converting store with advanced features. The results speak for themselves - 40% increase in conversions.', avatar: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1' },
   ];
 
-  // ✅ use imported images here
   const founders = [
     {
       name: 'Syed Haider Abbas Zaidi',
@@ -104,7 +103,7 @@ const Home = () => {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24 sm:pt-28">
         <BackgroundFX />
 
-        {/* floating icon layers (above bg, below content) */}
+        {/* floating icon layers */}
         <m.div
           aria-hidden
           className="pointer-events-none absolute inset-0 parallax z-10"
@@ -123,7 +122,7 @@ const Home = () => {
           </m.div>
         </m.div>
 
-        {/* glass card with all hero content */}
+        {/* glass card */}
         <div className="relative z-20 container mx-auto px-4 sm:px-6 lg:px-8">
           <div
             className="mx-auto max-w-5xl rounded-3xl backdrop-blur-2xl ring-1 shadow-[0_8px_40px_rgba(0,0,0,.35)] px-6 sm:px-10 py-10 sm:py-14 text-center"
@@ -236,7 +235,6 @@ const Home = () => {
                 className="text-center"
               >
                 <div className="mb-6">
-                  {/* ✅ use founder.image (from imports) */}
                   <img
                     src={founder.image}
                     alt={founder.name}
@@ -323,9 +321,13 @@ const Home = () => {
                     ))}
                   </ul>
 
+                  {/* HIGH-CONTRAST CHIPS (fixed) */}
                   <div className="mt-4 inline-flex flex-wrap gap-2">
                     {['Secure', 'Scalable', 'Performant'].map((p) => (
-                      <span key={p} className="shimmer animate-shimmer rounded-full px-2 py-1 text-xs ring-1 ring-slate-200/60">
+                      <span
+                        key={p}
+                        className="rounded-full px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-700 ring-1 ring-slate-200"
+                      >
                         {p}
                       </span>
                     ))}
