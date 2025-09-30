@@ -24,32 +24,38 @@ body{
   background: var(--cn-bg) url('/hero-bg.svg') center/cover no-repeat;
   color: var(--cn-text);
 }
+
 /* Desktop: subtle parallax feel without mobile jank */
 @media (min-width: 1024px){
   body{ background-attachment: fixed; }
 }
 
-/* Avoid any sub-pixel seam when inner scene moves */
+/* Prevent any sub-pixel seam when inner scene moves */
 html, body { overflow-x: hidden; }
 
 /* =========================================================
    BG SCENE LAYOUT (prevents left white line)
    ========================================================= */
-/* OUTER wrapper (no transform) — handled in JS component */
+/* OUTER wrapper (no transform) — used by BackgroundFX */
 .bg-scene{
   position: absolute;
-  inset: -48px;              /* overscan/bleed so parallax never exposes edges */
+  inset: -48px;                 /* overscan/bleed so parallax never exposes edges */
   transform: translate3d(0,0,0);
   will-change: transform;
+  backface-visibility: hidden;
 }
 
-/* Base image slow pan */
+/* Base image slow pan (desktop only; disabled on mobile below) */
 @keyframes bg-pan {
   0%   { transform: scale(1.025) translate3d(0,0,0); }
   50%  { transform: scale(1.035) translate3d(-12px,-8px,0); }
   100% { transform: scale(1.025) translate3d(8px,10px,0); }
 }
-.bg-pan { animation: bg-pan 40s ease-in-out infinite; }
+.bg-pan {
+  animation: bg-pan 40s ease-in-out infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+}
 
 /* =========================================================
    CURSOR SPOTLIGHT (follows --mx / --my set by JS)
@@ -60,11 +66,13 @@ html, body { overflow-x: hidden; }
   pointer-events: none;
   background:
     radial-gradient(260px 260px at var(--mx) var(--my),
-    rgba(255,255,255,0.14), rgba(255,255,255,0.08) 35%,
-    rgba(255,255,255,0.00) 68%);
+      rgba(255,255,255,0.14),
+      rgba(255,255,255,0.08) 35%,
+      rgba(255,255,255,0.00) 68%);
   mix-blend-mode: screen;
   opacity: .7;
-  transition: background-position .1s linear;
+  transition: background-position .08s linear;
+  will-change: background-position;
 }
 
 /* =========================================================
@@ -83,6 +91,8 @@ html, body { overflow-x: hidden; }
   mix-blend-mode: screen;
   animation: sweep 16s linear infinite;
   pointer-events: none;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 @keyframes sweep {
   0%   { transform: translate3d(-15%, -10%, 0) rotate(0.001deg); }
@@ -104,6 +114,8 @@ html, body { overflow-x: hidden; }
   animation: scan-drift 18s linear infinite;
   opacity: .06;
   pointer-events: none;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 @keyframes scan-drift {
   from { transform: translateY(0); }
@@ -123,6 +135,7 @@ html, body { overflow-x: hidden; }
     radial-gradient(35% 35% at 30% 70%, rgba(163,230,53,.38), transparent 60%);
   animation: aurora-move 18s ease-in-out infinite alternate;
   will-change: transform, opacity, filter;
+  backface-visibility: hidden;
 }
 .aurora-2{ animation-duration: 22s; transform: rotate(6deg); }
 .aurora-3{ animation-duration: 26s; transform: rotate(-4deg); }
@@ -140,11 +153,25 @@ html, body { overflow-x: hidden; }
   0%   { transform: translate3d(0,0,0); }
   100% { transform: translate3d(0,-28px,0); }
 }
-.animate-hex-drift { animation: hex-drift 25s linear infinite alternate; }
+.animate-hex-drift {
+  animation: hex-drift 25s linear infinite alternate;
+  will-change: transform;
+  backface-visibility: hidden;
+}
 
-/* Respect reduced motion */
-@media (prefers-reduced-motion: reduce){
-  .bg-pan, .light-sweep, .scanlines, .aurora, .animate-hex-drift { animation: none !important; }
+/* =========================================================
+   MOBILE / REDUCED MOTION GUARDRAILS
+   ========================================================= */
+@media (max-width: 1024px), (prefers-reduced-motion: reduce){
+  .bg-pan,
+  .light-sweep,
+  .scanlines,
+  .aurora,
+  .animate-hex-drift,
+  .cursor-spotlight{
+    animation: none !important;
+    display: none !important;   /* hide effect layers on phones */
+  }
 }
 
 /* =========================================================
@@ -283,6 +310,7 @@ select:-webkit-autofill{
   background:linear-gradient(180deg,rgba(0,0,0,.15) 0%,rgba(0,0,0,.25) 40%,rgba(0,0,0,.35) 100%);
   pointer-events:none;
 }
+
 /* Respect data/motion savings */
 @media (prefers-reduced-motion: reduce){
   .bgfx-image-wrap{ display:none !important; }
