@@ -127,40 +127,23 @@ const Footer = () => {
                 </WhatsAppButton>
               </div>
 
+              {/* Social: only ONE LinkedIn + ONE GitHub */}
               <div className="flex space-x-4">
                 <a
-                  href="https://www.linkedin.com/in/syed-haider-abbas-zaidi-132525215/"
+                  href="https://www.linkedin.com/in/forge-sentry-b93964387/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 bg-slate-800 rounded-lg transition-colors duration-200 hover:bg-[var(--cn-cyan,#22D3EE)] hover:text-slate-900"
-                  aria-label="Haider's LinkedIn"
+                  aria-label="ForgeSentry LinkedIn"
                 >
                   <Linkedin size={20} />
                 </a>
                 <a
-                  href="https://github.com/haider14-9abbaas"
+                  href="https://github.com/forgesentry"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 bg-slate-800 rounded-lg transition-colors duration-200 hover:bg-[var(--cn-cyan,#22D3EE)] hover:text-slate-900"
-                  aria-label="Haider's GitHub"
-                >
-                  <Github size={20} />
-                </a>
-                <a
-                  href="https://www.linkedin.com/in/hamza-kamran-271872297/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 bg-slate-800 rounded-lg transition-colors duration-200 hover:bg-[var(--cn-cyan,#22D3EE)] hover:text-slate-900"
-                  aria-label="Hamza's LinkedIn"
-                >
-                  <Linkedin size={20} />
-                </a>
-                <a
-                  href="https://github.com/Hamza-hani"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 bg-slate-800 rounded-lg transition-colors duration-200 hover:bg-[var(--cn-cyan,#22D3EE)] hover:text-slate-900"
-                  aria-label="Hamza's GitHub"
+                  aria-label="ForgeSentry GitHub"
                 >
                   <Github size={20} />
                 </a>
@@ -207,26 +190,6 @@ const Footer = () => {
                   contactType: 'customer service',
                   email: 'forgesentry@gmail.com',
                 },
-                founder: [
-                  {
-                    '@type': 'Person',
-                    name: 'Syed Haider Abbas Zaidi',
-                    jobTitle: 'Cybersecurity Professional & MERN Developer',
-                    sameAs: [
-                      'https://www.linkedin.com/in/syed-haider-abbas-zaidi-132525215/',
-                      'https://github.com/haider14-9abbaas',
-                    ],
-                  },
-                  {
-                    '@type': 'Person',
-                    name: 'Hamza Kamran',
-                    jobTitle: 'Cybersecurity & Full-Stack Developer',
-                    sameAs: [
-                      'https://www.linkedin.com/in/hamza-kamran-271872297/',
-                      'https://github.com/Hamza-hani',
-                    ],
-                  },
-                ],
               },
               {
                 '@type': 'WebSite',
