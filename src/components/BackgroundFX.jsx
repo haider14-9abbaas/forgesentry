@@ -1,53 +1,61 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Alive background (image-based)
- * - full-bleed image with slow pan (CSS .bg-pan)
- * - cursor spotlight (updates --mx/--my)
+ * Alive background:
+ * - <picture> with SVG (desktop) + JPG fallback (mobile / Save-Data)
+ * - spotlight that follows cursor/touch (fast, no lag)
  * - drifting hex grid
  * - light sweep + scanlines
  * - aurora blobs
  * - tiny particles (desktop only)
  */
 export default function BackgroundFX({
-  src = "/hero-bg.svg",
+  srcSvg = "/hero-bg.svg",
+  srcMobile = "/hero-bg-mobile.jpg", // <= add this file in /public
   alt = "",
   showHex = true,
   showAurora = true,
   showParticles = true,
+  parallax = true,
 }) {
   const canvasRef = useRef(null);
   const sceneRef = useRef(null);
 
-  /* ---------- Cursor spotlight: update CSS vars --mx / --my ---------- */
+  /* ---------- Spotlight (mouse + touch) ---------- */
   useEffect(() => {
     const el = sceneRef.current;
     if (!el) return;
 
-    let raf = 0;
-    let _mx = 0, _my = 0;
+    let raf = 0, mx = 0.5, my = 0.4;
 
-    const onMove = (e) => {
-      const r = el.getBoundingClientRect();
-      _mx = e.clientX - r.left;
-      _my = e.clientY - r.top;
-      if (!raf) raf = requestAnimationFrame(tick);
+    const setSpot = (x, y) => {
+      mx = x; my = y;
+      if (!raf) {
+        raf = requestAnimationFrame(() => {
+          el.style.setProperty("--mx", `${mx * 100}%`);
+          el.style.setProperty("--my", `${my * 100}%`);
+          raf = 0;
+        });
+      }
     };
 
-    const tick = () => {
-      el.style.setProperty("--mx", `${_mx}px`);
-      el.style.setProperty("--my", `${_my}px`);
-      raf = 0;
+    const onMouse = (e) => setSpot(e.clientX / window.innerWidth, e.clientY / window.innerHeight);
+    const onTouch = (e) => {
+      const t = e.touches?.[0];
+      if (t) setSpot(t.clientX / window.innerWidth, t.clientY / window.innerHeight);
     };
 
-    window.addEventListener("mousemove", onMove, { passive: true });
+    window.addEventListener("mousemove", onMouse, { passive: true });
+    window.addEventListener("touchmove", onTouch, { passive: true });
+
     return () => {
-      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mousemove", onMouse);
+      window.removeEventListener("touchmove", onTouch);
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
 
-  /* ---------------- Tiny particles (desktop only) ---------------- */
+  /* ---------- Tiny particles (desktop only) ---------- */
   useEffect(() => {
     const reduce =
       window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ||
@@ -64,14 +72,11 @@ export default function BackgroundFX({
 
     const init = () => {
       DPR = Math.min(2, window.devicePixelRatio || 1);
-      const { width, height } = c.getBoundingClientRect();
-      W = Math.floor(width * DPR);
-      H = Math.floor(height * DPR);
+      W = c.clientWidth * DPR;
+      H = c.clientHeight * DPR;
       c.width = W; c.height = H;
       pts.length = 0;
-
-      // A bit denser & faster so it's clearly visible
-      const density = Math.max(22, Math.floor((W * H) / (200_000 * DPR)));
+      const density = Math.max(18, Math.floor((W * H) / (220000 * DPR)));
       for (let i = 0; i < density; i++) {
         pts.push({
           x: Math.random() * W,
@@ -85,73 +90,69 @@ export default function BackgroundFX({
     const step = () => {
       ctx.clearRect(0, 0, W, H);
 
-      // move
       for (const p of pts) {
         p.x += p.vx; p.y += p.vy;
         if (p.x < 0 || p.x > W) p.vx *= -1;
         if (p.y < 0 || p.y > H) p.vy *= -1;
       }
 
-      // connection lines (slightly stronger)
-      ctx.globalAlpha = 0.42;
+      ctx.globalAlpha = 0.38;
       for (let i = 0; i < pts.length; i++) {
         for (let j = i + 1; j < pts.length; j++) {
           const a = pts[i], b = pts[j];
           const dx = a.x - b.x, dy = a.y - b.y;
           const d2 = dx * dx + dy * dy;
-          if (d2 < 9000 * DPR) {
+          if (d2 < 9800 * DPR) {
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);
-            ctx.strokeStyle = "rgba(79,70,229,0.14)"; // indigo
+            ctx.strokeStyle = "rgba(79,70,229,0.10)"; // indigo
             ctx.lineWidth = 1 * DPR;
             ctx.stroke();
           }
         }
       }
 
-      // dots
-      ctx.globalAlpha = 0.8;
+      ctx.globalAlpha = 0.6;
       for (const p of pts) {
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 1.25 * DPR, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(34,197,94,0.28)"; // lime-ish
+        ctx.arc(p.x, p.y, 1.2 * DPR, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(163,230,53,0.22)"; // lime-ish
         ctx.fill();
       }
 
       raf = requestAnimationFrame(step);
     };
 
-    const onResize = () => init();
-
     init();
     step();
+    const onResize = () => init();
     window.addEventListener("resize", onResize);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", onResize);
-    };
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); };
   }, [showParticles]);
 
   return (
     <div
       ref={sceneRef}
       className="absolute inset-0 overflow-hidden bg-scene"
-      style={{ background: "#0B0F19" }}
+      style={{ background: "#0B0F19", willChange: "transform" }}
       aria-hidden
     >
-      {/* base image with slow pan (CSS anim) */}
-      <img
-        src={src}
-        alt={alt}
-        className="absolute inset-0 h-full w-full object-cover will-change-transform bg-pan"
-        loading="eager"
-        decoding="sync"
-        fetchpriority="high"
-        draggable={false}
-      />
+      {/* base image with mobile fallback */}
+      <picture>
+        {/* If the browser supports SVG (most do), use it */}
+        <source srcSet={srcSvg} type="image/svg+xml" />
+        {/* Fallback for mobile / save-data / odd SVG bugs */}
+        <img
+          src={srcMobile}
+          alt={alt}
+          className="absolute inset-0 h-full w-full object-cover will-change-transform bg-pan"
+          loading="eager"
+          draggable={false}
+        />
+      </picture>
 
-      {/* top contrast gradient */}
+      {/* contrast gradient */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -160,13 +161,11 @@ export default function BackgroundFX({
         }}
       />
 
-      {/* cursor spotlight */}
+      {/* spotlight following cursor/touch */}
       <div className="cursor-spotlight" />
 
-      {/* animated light sweep */}
+      {/* light sweep + scanlines */}
       <div className="light-sweep" />
-
-      {/* scanlines */}
       <div className="scanlines" />
 
       {/* aurora blobs */}
@@ -197,7 +196,7 @@ export default function BackgroundFX({
         </div>
       )}
 
-      {/* particles (on top, but non-interactive) */}
+      {/* particles (desktop only) */}
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
     </div>
   );

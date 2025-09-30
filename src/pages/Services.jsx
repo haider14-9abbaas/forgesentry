@@ -94,6 +94,7 @@ const Services = () => {
         'Security code reviews and audits',
         'Secrets management and encryption',
         'Incident response planning',
+        'Audit logging and monitoring',
       ],
       benefits: ['Enhanced security posture', 'Reduced risk exposure', 'Compliance achievement', 'Peace of mind'],
       timeline: '2-6 weeks',
