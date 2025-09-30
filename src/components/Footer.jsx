@@ -99,14 +99,16 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Contact & Social */}
+          {/* Connect & Social */}
           <div>
             <h3 className="text-lg font-display font-semibold mb-6">Connect</h3>
-            <div className="space-y-4">
+
+            {/* Responsive wrapper for CTAs */}
+            <div className="space-y-4 footer-cta-responsive">
               <div className="grid grid-cols-1 gap-2">
                 <Link
                   to="/contact"
-                  className="btn btn-sm w-full font-medium hover:scale-105 transition-transform duration-200 rounded-lg"
+                  className="btn btn-sm w-full font-medium text-sm sm:text-base !min-h-[44px] sm:!min-h-[48px] hover:scale-105 transition-transform duration-200 rounded-lg"
                   style={{
                     backgroundColor: 'var(--cn-cyan, #22D3EE)',
                     borderColor: 'var(--cn-cyan, #22D3EE)',
@@ -115,9 +117,10 @@ const Footer = () => {
                 >
                   Get Free Consultation
                 </Link>
+
                 <WhatsAppButton
                   variant="button"
-                  className="btn-sm w-full rounded-lg"
+                  className="btn-sm w-full text-sm sm:text-base !min-h-[44px] sm:!min-h-[48px] rounded-lg"
                   message="Hi! I found your website and I'm interested in your cybersecurity and development services. Can we discuss my project requirements?"
                 >
                   Quick WhatsApp Chat
@@ -188,7 +191,6 @@ const Footer = () => {
       {/* JSON-LD Structured Data */}
       <script
         type="application/ld+json"
-        // safer for SSR/hydration than putting JSON directly as children
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             '@context': 'https://schema.org',
