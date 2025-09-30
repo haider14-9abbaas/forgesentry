@@ -1,30 +1,42 @@
+// netlify/functions/contact.js
 import nodemailer from 'nodemailer'
 
-/** Simple sanitiser */
+/** Escape a few dangerous characters so the plain-text email is safe */
 const clean = (v) =>
   typeof v === 'string'
     ? v.replace(/[<>"]/g, (m) => ({ '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]))
     : v
 
-/** Verify reCAPTCHA v3 token on the server */
-async function verifyRecaptcha(token) {
+/** Verify reCAPTCHA v3 on the server and return detailed diagnostics */
+async function verifyRecaptcha({ token, remoteip, expectedAction = 'contact' }) {
   const secret = process.env.RECAPTCHA_SECRET
   if (!secret) {
-    console.warn('RECAPTCHA_SECRET is not set; skipping verification.')
-    return true
+    return { ok: false, reason: 'RECAPTCHA_SECRET is not set on the server' }
   }
+
   try {
     const resp = await fetch('https://www.google.com/recaptcha/api/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ secret, response: token }),
+      body: new URLSearchParams({
+        secret,
+        response: token || '',
+        remoteip: remoteip || '',
+      }),
     })
     const data = await resp.json()
-    // accept if Google says success and score is okay (fallback if score missing)
-    return !!(data.success && (typeof data.score !== 'number' || data.score > 0.5))
+
+    // Decide acceptance:
+    //  - success must be true
+    //  - if Google provides a score, allow >= 0.3 during testing
+    //  - if Google provides an action, prefer it to match 'contact'
+    let ok = !!data.success
+    if (ok && typeof data.score === 'number') ok = data.score >= 0.3
+    if (ok && data.action && expectedAction) ok = data.action === expectedAction
+
+    return { ok, google: data }
   } catch (err) {
-    console.error('reCAPTCHA check failed:', err)
-    return false
+    return { ok: false, reason: `verify error: ${String(err)}` }
   }
 }
 
@@ -36,7 +48,7 @@ function getCsrfCookie(headers) {
 }
 
 export const handler = async (event) => {
-  // CORS preflight
+  // CORS / preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -53,12 +65,23 @@ export const handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
   }
 
-  const ALLOWED = (process.env.ALLOWED_ORIGIN || '').split(',').map((s) => s.trim()).filter(Boolean)
+  const allowedList = (process.env.ALLOWED_ORIGIN || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+
   const origin = event.headers.origin || event.headers.Origin || ''
+  const allowOrigin = allowedList.length
+    ? allowedList.includes(origin)
+      ? origin
+      : allowedList[0]
+    : '*'
+
   const corsHeaders = {
-    'Access-Control-Allow-Origin': ALLOWED.length ? (ALLOWED.includes(origin) ? origin : ALLOWED[0]) : '*',
+    'Access-Control-Allow-Origin': allowOrigin,
     Vary: 'Origin',
-    'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+    'Content-Security-Policy':
+      "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
     'Referrer-Policy': 'no-referrer',
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
@@ -88,10 +111,26 @@ export const handler = async (event) => {
       return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Message must be at least 30 characters' }) }
     }
 
-    // reCAPTCHA
-    const ok = await verifyRecaptcha(body.recaptchaToken || '')
-    if (!ok) {
-      return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'reCAPTCHA verification failed' }) }
+    // reCAPTCHA with diagnostics
+    const remoteip = event.headers['x-forwarded-for'] || ''
+    const v = await verifyRecaptcha({
+      token: body.recaptchaToken,
+      remoteip,
+      expectedAction: 'contact',
+    })
+    if (!v.ok) {
+      return {
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({
+          error: 'reCAPTCHA verification failed',
+          recaptcha_debug: v, // <-- check this in DevTools > Network > Response
+          hint:
+            'If google.error-codes shows invalid-input-secret, re-check RECAPTCHA_SECRET. ' +
+            'If timeout-or-duplicate, get a fresh token per submit. ' +
+            'If hostname mismatch, add your domain in the reCAPTCHA admin.',
+        }),
+      }
     }
 
     // nodemailer transporter (Gmail + App Password)
@@ -101,7 +140,7 @@ export const handler = async (event) => {
       secure: true,
       auth: {
         user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS, // 16-char app password
+        pass: process.env.SMTP_PASS, // 16-char Gmail App Password (no spaces)
       },
     })
 
@@ -132,7 +171,7 @@ ${safe.message}
 ---
 Submitted: ${new Date().toISOString()}
 User-Agent: ${event.headers['user-agent'] || ''}
-IP: ${event.headers['x-forwarded-for'] || 'unknown'}
+IP: ${remoteip || 'unknown'}
 `,
       replyTo: safe.email,
     })
@@ -150,7 +189,11 @@ Thanks for reaching out! We've received your inquiry about "${safe.reason}" and 
 (Automatic message)`,
     })
 
-    return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true, message: 'Message sent successfully' }) }
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: JSON.stringify({ success: true, message: 'Message sent successfully' }),
+    }
   } catch (err) {
     console.error('Contact function error:', err)
     return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Internal server error' }) }
