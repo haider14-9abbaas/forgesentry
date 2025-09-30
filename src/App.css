@@ -1,33 +1,21 @@
 /* ---------- Your original custom effects (kept) ---------- */
-.parallax-container {
-  position: relative;
-  overflow: hidden;
-}
+.parallax-container { position: relative; overflow: hidden; }
 
 .parallax-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 120%;
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 120%;
   background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);
   transform: translateZ(0);
 }
 
 .hero-bg-logo {
-  position: absolute;
-  top: 50%;
-  left: 10%;
+  position: absolute; top: 50%; left: 10%;
   transform: translateY(-50%);
-  opacity: 0.03;
-  width: 300px;
-  height: 300px;
+  opacity: 0.03; width: 300px; height: 300px;
   pointer-events: none;
 }
 
-.card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
+.card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 .card-hover:hover {
   transform: translateY(-4px);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -41,17 +29,10 @@
   color: #4F46E5;
   transition: all 0.2s ease;
 }
-.tech-pill:hover {
-  background: rgba(79, 70, 229, 0.15);
-  transform: translateY(-1px);
-}
+.tech-pill:hover { background: rgba(79, 70, 229, 0.15); transform: translateY(-1px); }
 
 .filter-chip { transition: all 0.2s ease; }
-.filter-chip.active {
-  background: #4F46E5;
-  color: #fff;
-  transform: translateY(-1px);
-}
+.filter-chip.active { background: #4F46E5; color: #fff; transform: translateY(-1px); }
 
 .floating-elements { animation: float 6s ease-in-out infinite; }
 
@@ -68,13 +49,9 @@
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 /* Focus outline util */
-.focus-visible {
-  outline: 2px solid #4F46E5;
-  outline-offset: 2px;
-}
+.focus-visible { outline: 2px solid #4F46E5; outline-offset: 2px; }
 
 /* ---------- Readability fixes for light cards/forms ---------- */
-/* These ensure readable text even if body text is light (dark theme) */
 .input,
 .select,
 .textarea {
@@ -82,18 +59,13 @@
   color: #0f172a !important;              /* slate-900 */
   border-color: rgba(148, 163, 184, .5);  /* slate-400-ish */
 }
-
 .input::placeholder,
 .textarea::placeholder {
   color: #94a3b8 !important;              /* slate-400 */
   opacity: 1 !important;
 }
-
-/* Labels and small help text */
 .label .label-text,
-.label .label-text-alt {
-  color: #334155 !important;              /* slate-700 */
-}
+.label .label-text-alt { color: #334155 !important; }  /* slate-700 */
 
 /* Autofill text color */
 input:-webkit-autofill,

@@ -1,191 +1,283 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
-export default function BackgroundFX({ sources }) {
+/**
+ * Alive background with:
+ * - full-bleed image (slow pan)
+ * - cursor spotlight (fast follow)
+ * - twinkling sparkles (canvas; lively)
+ * - drifting hex grid
+ * - aurora blobs
+ * - parallax tilt on an overscanned inner scene (no edge seams)
+ */
+export default function BackgroundFX({
+  src = "/hero-bg.svg",
+  alt = "",
+  showHex = true,
+  showAurora = true,
+  showSparkles = true,
+  parallax = true,
+}) {
   const canvasRef = useRef(null);
-  const vidRef = useRef(null);
-  const [ready, setReady] = useState(false);
-  const [blocked, setBlocked] = useState(false);   // autoplay blocked?
+  const outerRef = useRef(null);     // stays fixed (no transform)
+  const innerRef = useRef(null);     // moves slightly (overscanned)
+  const mouseRef = useRef({ x: 0.5, y: 0.4 }); // spotlight & particles
 
-  // Multi-resolution source set (smallest last so it’s default for tiny phones)
-  const srcSet = useMemo(() => {
-    if (sources?.length) return sources;
-    return [
-      // WebM (preferred on Android/desktop)
-      { src: "/bg-1080.webm", type: "video/webm", media: "(min-width:1280px)" },
-      { src: "/bg-720.webm",  type: "video/webm", media: "(min-width:640px)" },
-      { src: "/bg-480.webm",  type: "video/webm" },
-      // MP4 (H.264) fallback for iOS/Safari
-      { src: "/bg-1080.mp4",  type: "video/mp4",  media: "(min-width:1280px)" },
-      { src: "/bg-720.mp4",   type: "video/mp4",  media: "(min-width:640px)" },
-      { src: "/bg-480.mp4",   type: "video/mp4" },
-    ];
-  }, [sources]);
-
-  // Try to autoplay on mount and when sources load
+  /* ---------------- Cursor spotlight position (fast follow) ---------------- */
   useEffect(() => {
-    const v = vidRef.current;
-    if (!v) return;
-    // iOS can require the property to be set imperatively *before* play()
-    v.muted = true;
-    v.playsInline = true;
+    const el = outerRef.current;
+    if (!el) return;
 
-    const tryPlay = async () => {
-      try {
-        await v.play();
-        setBlocked(false);
-        setReady(true);
-      } catch {
-        // Autoplay blocked → show the tap overlay
-        setBlocked(true);
-        setReady(false);
-      }
+    let raf = 0;
+    let tx = 0.5, ty = 0.4;
+    let cx = tx, cy = ty;
+
+    const move = (e) => {
+      const nx = e.clientX / window.innerWidth;
+      const ny = e.clientY / window.innerHeight;
+      tx = nx; ty = ny;
+      mouseRef.current.x = nx;
+      mouseRef.current.y = ny;
+      if (!raf) tick();
     };
 
-    // If metadata already loaded, play immediately; otherwise on canplay
-    if (v.readyState >= 2) tryPlay();
-    else {
-      const onCanPlay = () => tryPlay();
-      v.addEventListener("canplay", onCanPlay, { once: true });
-      return () => v.removeEventListener("canplay", onCanPlay);
-    }
-  }, [srcSet]);
+    const tick = () => {
+      // faster ease so it feels snappy
+      cx += (tx - cx) * 0.28;
+      cy += (ty - cy) * 0.28;
+      el.style.setProperty("--mx", `${(cx * 100).toFixed(3)}%`);
+      el.style.setProperty("--my", `${(cy * 100).toFixed(3)}%`);
+      raf =
+        Math.abs(tx - cx) > 0.0008 || Math.abs(ty - cy) > 0.0008
+          ? requestAnimationFrame(tick)
+          : 0;
+    };
 
-  // Lightweight particles (disabled on small screens / reduced-motion)
+    window.addEventListener("mousemove", move);
+    return () => {
+      window.removeEventListener("mousemove", move);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  /* ---------------- Parallax tilt (desktop only) on INNER scene ---------------- */
   useEffect(() => {
     const reduce =
       window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ||
-      window.innerWidth < 1024;
+      window.innerWidth < 1024 ||
+      !parallax;
+
     if (reduce) return;
 
+    const el = innerRef.current;
+    if (!el) return;
+
+    let raf = 0, tx = 0, ty = 0, cx = 0, cy = 0;
+
+    const onMove = (e) => {
+      const nx = e.clientX / window.innerWidth - 0.5;
+      const ny = e.clientY / window.innerHeight - 0.5;
+      // subtle amplitudes (px) — inner scene is overscanned, so no seams
+      tx = nx * 10;
+      ty = ny * 8;
+      if (!raf) anim();
+    };
+
+    const anim = () => {
+      cx += (tx - cx) * 0.12;
+      cy += (ty - cy) * 0.12;
+      el.style.transform = `translate3d(${cx.toFixed(3)}px, ${cy.toFixed(3)}px, 0)`;
+      raf =
+        Math.abs(tx - cx) > 0.05 || Math.abs(ty - cy) > 0.05
+          ? requestAnimationFrame(anim)
+          : 0;
+    };
+
+    window.addEventListener("mousemove", onMove);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [parallax]);
+
+  /* ---------------- Sparkles (livelier + cursor attraction) ---------------- */
+  useEffect(() => {
+    if (!showSparkles) return;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     const c = canvasRef.current;
-    if (!c) return;
-    const ctx = c.getContext("2d");
+    if (!c || reduce) return;
+
+    const ctx = c.getContext("2d", { alpha: true });
     let raf, W, H, DPR;
-    const points = [];
+    let t = 0;
+
+    const colors = [
+      [34, 211, 238],  // cyan
+      [124, 58, 237],  // purple
+      [163, 230, 53],  // lime
+    ];
+
+    const stars = [];
+
+    const resetStar = (s) => {
+      s.x = Math.random() * W;
+      s.y = Math.random() * H;
+      // a touch faster than before
+      s.vx = (Math.random() - 0.5) * 0.20 * DPR;
+      s.vy = (Math.random() - 0.5) * 0.20 * DPR;
+      s.size = (Math.random() * 1.3 + 0.7) * DPR;
+      s.phase = Math.random() * Math.PI * 2;
+      s.col = colors[(Math.random() * colors.length) | 0];
+      s.life = 0;
+      s.ttl = 5 + Math.random() * 5;
+    };
 
     const init = () => {
       DPR = Math.min(2, window.devicePixelRatio || 1);
       W = c.clientWidth * DPR;
       H = c.clientHeight * DPR;
       c.width = W; c.height = H;
-      points.length = 0;
-      const density = Math.floor((W * H) / (140000 * DPR));
-      for (let i = 0; i < density; i++) {
-        points.push({
-          x: Math.random() * W,
-          y: Math.random() * H,
-          vx: (Math.random() - 0.5) * 0.2 * DPR,
-          vy: (Math.random() - 0.5) * 0.2 * DPR,
-        });
+      stars.length = 0;
+
+      // a few more than before
+      const count = Math.min(200, Math.max(80, Math.floor((W * H) / 160000)));
+      for (let i = 0; i < count; i++) {
+        const s = {};
+        resetStar(s);
+        stars.push(s);
       }
     };
 
-    const tick = () => {
+    const drawStar = (s, alpha) => {
+      const [r, g, b] = s.col;
+      ctx.save();
+      ctx.shadowBlur = 7 * DPR;
+      ctx.shadowColor = `rgba(${r},${g},${b},${alpha})`;
+      ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    };
+
+    const step = (now) => {
+      t = now * 0.001;
       ctx.clearRect(0, 0, W, H);
-      for (const p of points) {
-        p.x += p.vx; p.y += p.vy;
-        if (p.x < 0 || p.x > W) p.vx *= -1;
-        if (p.y < 0 || p.y > H) p.vy *= -1;
-      }
-      ctx.globalAlpha = 0.35;
-      for (let i = 0; i < points.length; i++) {
-        for (let j = i + 1; j < points.length; j++) {
-          const a = points[i], b = points[j];
-          const dx = a.x - b.x, dy = a.y - b.y;
-          const d2 = dx * dx + dy * dy;
-          if (d2 < 9000 * DPR) {
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.strokeStyle = "rgba(79,70,229,0.08)";
-            ctx.lineWidth = 1 * DPR;
-            ctx.stroke();
-          }
+
+      // mouse attraction (tiny, to feel alive)
+      const mx = mouseRef.current.x * W;
+      const my = mouseRef.current.y * H;
+
+      for (const s of stars) {
+        // mild attraction towards mouse
+        const dx = mx - s.x;
+        const dy = my - s.y;
+        const dist2 = dx * dx + dy * dy;
+        if (dist2 < (260 * DPR) ** 2) {
+          // push away if very close, pull slightly if medium distance
+          const f = dist2 < (120 * DPR) ** 2 ? -0.0009 : 0.00045;
+          s.vx += dx * f;
+          s.vy += dy * f;
         }
+
+        // clamp velocity a bit
+        s.vx = Math.max(-0.32 * DPR, Math.min(0.32 * DPR, s.vx));
+        s.vy = Math.max(-0.32 * DPR, Math.min(0.32 * DPR, s.vy));
+
+        // move & bounce
+        s.x += s.vx; s.y += s.vy;
+        if (s.x < 0 || s.x > W) s.vx *= -1;
+        if (s.y < 0 || s.y > H) s.vy *= -1;
+
+        // twinkle: brighter range, slight color pulse
+        const tw = 0.65 + 0.35 * Math.sin(s.phase + t * (0.85 + s.size * 0.06));
+        const alpha = 0.22 + tw * 0.55;
+
+        drawStar(s, alpha);
+
+        s.life += 1 / 60;
+        if (s.life > s.ttl) resetStar(s);
       }
-      ctx.globalAlpha = 0.5;
-      for (const p of points) {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 1.3 * DPR, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(34,197,94,0.18)";
-        ctx.fill();
-      }
-      raf = requestAnimationFrame(tick);
+
+      raf = requestAnimationFrame(step);
     };
 
     init();
-    tick();
+    raf = requestAnimationFrame(step);
     const onResize = () => init();
     window.addEventListener("resize", onResize);
     return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); };
-  }, []);
-
-  const handleTapStart = async () => {
-    const v = vidRef.current;
-    if (!v) return;
-    try {
-      v.muted = true;
-      v.playsInline = true;
-      await v.play();
-      setBlocked(false);
-      setReady(true);
-    } catch {
-      // keep overlay visible
-    }
-  };
+  }, [showSparkles]);
 
   return (
-    <div className="absolute inset-0 overflow-hidden" style={{ background: "#0B0F19" }}>
-      <video
-        ref={vidRef}
-        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
-          ready ? "opacity-100" : "opacity-0"
-        }`}
-        autoPlay
-        muted
-        playsInline
-        loop
-        preload="auto"
-        onLoadedData={() => setReady(true)}
+    // OUTER stays fixed → no seams
+    <div
+      ref={outerRef}
+      className="absolute inset-0 overflow-hidden"
+      style={{ background: "#0B0F19" }}
+      aria-hidden
+    >
+      {/* INNER is overscanned and moves slightly for parallax */}
+      <div
+        ref={innerRef}
+        className="bg-scene will-change-transform"
       >
-        {srcSet.map((s) => (
-          <source key={s.src} src={s.src} type={s.type} {...(s.media ? { media: s.media } : {})} />
-        ))}
-      </video>
+        {/* base image with slow pan */}
+        <img
+          src={src}
+          alt={alt}
+          className="absolute inset-0 h-full w-full object-cover will-change-transform bg-pan"
+          loading="eager"
+          decoding="sync"
+          fetchpriority="high"
+          style={{ transform: "translateZ(0)" }}
+        />
 
-      {/* Tap-to-start overlay if autoplay is blocked (common on iOS) */}
-      {blocked && (
-        <button
-          onClick={handleTapStart}
-          className="absolute inset-0 flex items-center justify-center bg-black/40 text-white"
-          aria-label="Start background animation"
-        >
-          <span className="rounded-full px-4 py-2 backdrop-blur-sm bg-white/20 ring-1 ring-white/40">
-            Tap to enable animation
-          </span>
-        </button>
-      )}
+        {/* top contrast gradient */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(0,0,0,.12) 0%, rgba(0,0,0,.26) 40%, rgba(0,0,0,.36) 100%)",
+          }}
+        />
 
-      {/* subtle hex overlay */}
-      <svg
-        className="absolute inset-0 w-full h-full opacity-5 pointer-events-none"
-        viewBox="0 0 800 600"
-        preserveAspectRatio="none"
-      >
-        <defs>
-          <pattern id="hex" width="40" height="34.64" patternUnits="userSpaceOnUse" patternTransform="translate(20,0)">
-            <polygon
-              points="20,0 40,10 40,24.64 20,34.64 0,24.64 0,10"
-              fill="none"
-              stroke="rgba(79,70,229,0.15)"
-              strokeWidth="1"
-            />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#hex)" />
-      </svg>
+        {/* cursor spotlight (follows --mx/--my on outer) */}
+        <div className="cursor-spotlight pointer-events-none" />
 
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
+        {/* subtle scanlines */}
+        <div className="scanlines pointer-events-none" />
+
+        {/* aurora blobs */}
+        {showAurora && (
+          <>
+            <div className="aurora absolute -top-24 -left-28 w-[46rem] h-[46rem]" />
+            <div className="aurora aurora-2 absolute top-8 right-[-8rem] w-[36rem] h-[36rem]" />
+            <div className="aurora aurora-3 absolute bottom-[-10rem] left-1/3 w-[40rem] h-[40rem]" />
+          </>
+        )}
+
+        {/* drifting hex grid */}
+        {showHex && (
+          <div className="absolute inset-0 animate-hex-drift opacity-[0.10] pointer-events-none mix-blend-soft-light">
+            <svg className="w-full h-full" viewBox="0 0 800 600" preserveAspectRatio="none">
+              <defs>
+                <pattern id="bg-hex" width="40" height="34.64" patternUnits="userSpaceOnUse" patternTransform="translate(20,0)">
+                  <polygon
+                    points="20,0 40,10 40,24.64 20,34.64 0,24.64 0,10"
+                    fill="none"
+                    stroke="rgba(148,163,184,0.55)"
+                    strokeWidth="1"
+                  />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#bg-hex)" />
+            </svg>
+          </div>
+        )}
+
+        {/* sparkles */}
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
+      </div>
     </div>
   );
 }

@@ -24,7 +24,6 @@ import SectionHeader from '../components/SectionHeader';
 import TestimonialCard from '../components/TestimonialCard';
 import WhatsAppButton from '../components/WhatsAppButton';
 
-// ✅ import images from src/assets (Vite will bundle them correctly)
 import haiderImg from '../assets/haider.png';
 import hamzaImg  from '../assets/hamza.png';
 
@@ -101,6 +100,7 @@ const Home = () => {
     <div className="min-h-screen">
       {/* ========= HERO ========= */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24 sm:pt-28">
+        {/* Image-based background (no video) */}
         <BackgroundFX />
 
         {/* floating icon layers */}
@@ -321,7 +321,7 @@ const Home = () => {
                     ))}
                   </ul>
 
-                  {/* HIGH-CONTRAST CHIPS (fixed) */}
+                  {/* HIGH-CONTRAST CHIPS (visible on all cards) */}
                   <div className="mt-4 inline-flex flex-wrap gap-2">
                     {['Secure', 'Scalable', 'Performant'].map((p) => (
                       <span

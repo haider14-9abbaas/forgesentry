@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="1440" height="900">
+  <defs>
+    <!-- Base dark -->
+    <radialGradient id="bg" cx="50%" cy="45%" r="80%">
+      <stop offset="0%"  stop-color="#0B0F19"/>
+      <stop offset="100%" stop-color="#0B0F19"/>
+    </radialGradient>
+
+    <!-- Cyan glow -->
+    <radialGradient id="g1" cx="20%" cy="30%" r="30%">
+      <stop offset="0%"  stop-color="#22D3EE" stop-opacity="0.45"/>
+      <stop offset="60%" stop-color="#22D3EE" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Purple glow -->
+    <radialGradient id="g2" cx="78%" cy="28%" r="28%">
+      <stop offset="0%"  stop-color="#7C3AED" stop-opacity="0.40"/>
+      <stop offset="60%" stop-color="#7C3AED" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#7C3AED" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Lime glow -->
+    <radialGradient id="g3" cx="35%" cy="78%" r="28%">
+      <stop offset="0%"  stop-color="#A3E635" stop-opacity="0.35"/>
+      <stop offset="60%" stop-color="#A3E635" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#A3E635" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Soft vignette -->
+    <radialGradient id="v" cx="50%" cy="55%" r="80%">
+      <stop offset="55%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.35"/>
+    </radialGradient>
+
+    <!-- Very faint hex grid pattern -->
+    <pattern id="hex" width="60" height="52" patternUnits="userSpaceOnUse"
+             patternTransform="translate(0,0)">
+      <path d="M15 0 L45 0 L60 26 L45 52 L15 52 L0 26 Z"
+            fill="none" stroke="#FFFFFF" stroke-opacity="0.05" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- dark base -->
+  <rect width="1440" height="900" fill="url(#bg)"/>
+
+  <!-- glows -->
+  <rect width="1440" height="900" fill="url(#g1)"/>
+  <rect width="1440" height="900" fill="url(#g2)"/>
+  <rect width="1440" height="900" fill="url(#g3)"/>
+
+  <!-- hex grid, very faint -->
+  <rect width="1440" height="900" fill="url(#hex)" opacity="0.5"/>
+
+  <!-- vignette for readability -->
+  <rect width="1440" height="900" fill="url(#v)"/>
+
+  <!-- subtle top highlight band -->
+  <rect y="0" width="1440" height="220" fill="url(#bg)" opacity="0.35"/>
+</svg>

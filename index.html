@@ -14,18 +14,30 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
     <!-- SEO -->
-    <meta name="description" content="Professional cybersecurity and web development services. Secure MERN development, automation, and digital solutions engineered for results." />
-    <meta name="keywords" content="cybersecurity, web development, MERN stack, automation, security consulting, React development" />
+    <meta
+      name="description"
+      content="Professional cybersecurity and web development services. Secure MERN development, automation, and digital solutions engineered for results."
+    />
+    <meta
+      name="keywords"
+      content="cybersecurity, web development, MERN stack, automation, security consulting, React development"
+    />
     <meta name="author" content="ForgeSentry" />
     <link rel="canonical" href="https://forgesentry.com/" />
 
     <!-- OpenGraph -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="ForgeSentry - Secure Web & Automation Solutions" />
-    <meta property="og:description" content="Professional cybersecurity and web development services engineered for outcomes." />
+    <meta
+      property="og:description"
+      content="Professional cybersecurity and web development services engineered for outcomes."
+    />
     <meta property="og:image" content="/og-forgesentry.png" />
     <meta property="og:url" content="https://forgesentry.com/" />
     <meta property="og:site_name" content="ForgeSentry" />
@@ -33,46 +45,26 @@
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="ForgeSentry - Secure Web & Automation Solutions" />
-    <meta name="twitter:description" content="Professional cybersecurity and web development services engineered for outcomes." />
+    <meta
+      name="twitter:description"
+      content="Professional cybersecurity and web development services engineered for outcomes."
+    />
     <meta name="twitter:image" content="/og-forgesentry.png" />
 
-    <!-- Performance preloads for the background video -->
-    <link rel="preload" as="video" href="/bg-1080.webm" type="video/webm" />
-    <link rel="preload" as="video" href="/bg-1080.mp4"  type="video/mp4"  />
-    <link rel="preload" as="video" href="/bg-720.webm"  type="video/webm" />
-    <link rel="preload" as="video" href="/bg-720.mp4"   type="video/mp4"  />
-    <link rel="preload" as="video" href="/bg-480.webm"  type="video/webm" />
-    <link rel="preload" as="video" href="/bg-480.mp4"   type="video/mp4"  />
+    <!-- Preload the primary hero background image (image-based, not video) -->
+    <link rel="preload" as="image" href="/hero-bg-720.avif" imagesrcset="/hero-bg-480.avif 480w, /hero-bg-720.avif 720w, /hero-bg-1080.avif 1080w" imagesizes="100vw" />
+    <link rel="preload" as="image" href="/hero-bg-720.webp" imagesrcset="/hero-bg-480.webp 480w, /hero-bg-720.webp 720w, /hero-bg-1080.webp 1080w" imagesizes="100vw" />
+    <link rel="preload" as="image" href="/hero-bg-720.jpg"  imagesrcset="/hero-bg-480.jpg 480w,  /hero-bg-720.jpg 720w,  /hero-bg-1080.jpg 1080w"  imagesizes="100vw" />
   </head>
 
   <body>
-    <!-- Background video lives outside React so it loads immediately -->
-    <div id="bg-video-wrap" class="bgfx-wrap" aria-hidden="true">
-      <video
-        class="bgfx-video"
-        autoplay
-        muted
-        loop
-        playsinline
-        preload="auto"
-        poster="/bg-poster.jpg"
-      >
-        <source src="/bg-1080.webm" type="video/webm" />
-        <source src="/bg-1080.mp4"  type="video/mp4" />
-        Your browser does not support the background video.
-      </video>
-      <!-- Optional subtle overlay to improve text contrast on light sections -->
-      <div class="bgfx-overlay"></div>
-    </div>
-
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
 
     <noscript>
       <style>
-        /* Keep a readable backdrop if JS is disabled */
-        #bg-video-wrap { display:none; }
-        body { background: #0B0F19 url('/bg-poster.jpg') center/cover no-repeat; }
+        /* Readable static backdrop if JS is disabled */
+        body { background: #0B0F19 url('/hero-bg-720.jpg') center/cover no-repeat; }
       </style>
       JavaScript is required to run this app.
     </noscript>
