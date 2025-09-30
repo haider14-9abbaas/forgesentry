@@ -1,4 +1,3 @@
-// src/pages/Contact.jsx
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useForm } from 'react-hook-form'
@@ -19,32 +18,28 @@ const contactSchema = z.object({
   reason: z.string().min(1, 'Please select a reason for contact'),
   message: z.string().min(30, 'Message must be at least 30 characters'),
   consent: z.boolean().refine((v) => v === true, 'You must agree to the terms'),
-  // honeypot; bots will fill this, humans won’t
+  // Honeypot; bots fill this, humans won’t
   website: z.string().optional(),
 })
 
 /** Your reCAPTCHA SITE key (safe for client) */
 const SITE_KEY = '6LeeRdkrAAAAADlgNzKKzk-AfXfpfftmXghVhgDP'
 
-/** POST helper. Tries /api/contact first (prod), then falls back to Functions path (dev). */
-async function postContact(payload, csrfToken) {
-  const tryOnce = async (url) => {
-    return fetch(url, {
+/** POST helper. Tries /api/contact first, then the direct Functions path. */
+async function postContact(payload) {
+  const tryOnce = async (url) =>
+    fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        'X-CSRF-Token': csrfToken, // <-- IMPORTANT: header, not body
-      },
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-Token': payload.__csrf },
       body: JSON.stringify(payload),
     })
-  }
+
   let res = await tryOnce('/api/contact')
   if (res.status === 404) res = await tryOnce('/.netlify/functions/contact')
   return res
 }
 
-const Contact = () => {
+export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState(null) // 'success' | 'error' | null
   const [serverError, setServerError] = useState('')
@@ -139,11 +134,11 @@ const Contact = () => {
 
     try {
       const recaptchaToken = await getRecaptchaToken()
-
-      const res = await postContact(
-        { ...data, recaptchaToken },
-        csrfToken
-      )
+      const res = await postContact({
+        ...data,
+        recaptchaToken,
+        __csrf: csrfToken,
+      })
 
       let json = {}
       try { json = await res.clone().json() } catch {}
@@ -241,14 +236,7 @@ const Contact = () => {
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
                 {/* Honeypot (hidden) */}
-                <input
-                  {...register('website')}
-                  type="text"
-                  autoComplete="off"
-                  tabIndex={-1}
-                  className="hidden"
-                  aria-hidden="true"
-                />
+                <input {...register('website')} type="text" tabIndex={-1} className="hidden" aria-hidden="true" />
 
                 <div>
                   <label className="label"><span className="label-text font-medium">Full Name *</span></label>
@@ -287,10 +275,7 @@ const Contact = () => {
 
                 <div>
                   <label className="label"><span className="label-text font-medium">Budget Range *</span></label>
-                  <select
-                    {...register('budget')}
-                    className={`select select-bordered w-full ${errors.budget ? 'select-error' : ''}`}
-                  >
+                  <select {...register('budget')} className={`select select-bordered w-full ${errors.budget ? 'select-error' : ''}`}>
                     <option value="">Select budget range</option>
                     {budgetRanges.map((r) => <option key={r} value={r}>{r}</option>)}
                   </select>
@@ -299,10 +284,7 @@ const Contact = () => {
 
                 <div>
                   <label className="label"><span className="label-text font-medium">How can we help? *</span></label>
-                  <select
-                    {...register('reason')}
-                    className={`select select-bordered w-full ${errors.reason ? 'select-error' : ''}`}
-                  >
+                  <select {...register('reason')} className={`select select-bordered w-full ${errors.reason ? 'select-error' : ''}`}>
                     <option value="">Select a reason</option>
                     {contactReasons.map((r) => <option key={r} value={r}>{r}</option>)}
                   </select>
@@ -439,5 +421,3 @@ const Contact = () => {
     </div>
   )
 }
-
-export default Contact
