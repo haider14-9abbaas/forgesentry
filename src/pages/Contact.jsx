@@ -23,7 +23,7 @@ const contactSchema = z.object({
 })
 
 /** Your reCAPTCHA SITE key (safe for client) */
-const SITE_KEY = '6LeeRdkrAAAAADlgNzKKzk-AfXfpfftmXghVhgDP'
+const SITE_KEY = '6Ley7tkrAAAAAPgwvPTYDotQ1zzUVNg0A-LRrMoq'
 
 /** POST helper. Tries /api/contact first, then the direct Functions path. */
 async function postContact(payload) {
