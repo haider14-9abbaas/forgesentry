@@ -1,13 +1,13 @@
-import { useState, useMemo } from 'react'
-import { motion } from 'framer-motion'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   Mail, MapPin, Send, CheckCircle, AlertCircle, Clock, Shield,
   Linkedin, Github, Loader2, MessageCircle,
-} from 'lucide-react'
-import WhatsAppButton from '../components/WhatsAppButton'
+} from 'lucide-react';
+import WhatsAppButton from '../components/WhatsAppButton';
 
 /* -------------------- validation -------------------- */
 const contactSchema = z.object({
@@ -20,10 +20,10 @@ const contactSchema = z.object({
   consent: z.boolean().refine((v) => v === true, 'You must agree to the terms'),
   // Honeypot; bots fill this, humans won’t
   website: z.string().optional(),
-})
+});
 
 /** WhatsApp phone (no +, no spaces): countrycode + number */
-const WHATSAPP_PHONE = '923360150999' // +92 336 0150999
+const WHATSAPP_PHONE = '923360150999'; // +92 336 0150999
 
 function buildWhatsAppText({
   fullName, email, company, budget, reason, message,
@@ -38,36 +38,36 @@ function buildWhatsAppText({
     '',
     'Message:',
     message,
-  ].filter(Boolean)
-  return lines.join('\n')
+  ].filter(Boolean);
+  return lines.join('\n');
 }
 
 function makeWhatsAppLink(text) {
-  return `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`
+  return `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`;
 }
 
 export default function Contact() {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState(null) // 'success' | 'error' | null
-  const [serverError, setServerError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null); // 'success' | 'error' | null
+  const [serverError, setServerError] = useState('');
 
   const { register, handleSubmit, reset, formState: { errors }, watch } =
-    useForm({ resolver: zodResolver(contactSchema) })
+    useForm({ resolver: zodResolver(contactSchema) });
 
-  const messageLength = watch('message')?.length || 0
+  const messageLength = watch('message')?.length || 0;
 
-  const fullName = watch('fullName') || ''
-  const email = watch('email') || ''
-  const company = watch('company') || ''
-  const budget = watch('budget') || ''
-  const reason = watch('reason') || ''
-  const message = watch('message') || ''
+  const fullName = watch('fullName') || '';
+  const email = watch('email') || '';
+  const company = watch('company') || '';
+  const budget = watch('budget') || '';
+  const reason = watch('reason') || '';
+  const message = watch('message') || '';
 
   const waText = useMemo(
     () => buildWhatsAppText({ fullName, email, company, budget, reason, message }),
     [fullName, email, company, budget, reason, message]
-  )
-  const waLink = useMemo(() => makeWhatsAppLink(waText), [waText])
+  );
+  const waLink = useMemo(() => makeWhatsAppLink(waText), [waText]);
 
   const budgetRanges = [
     'Under $5,000',
@@ -76,7 +76,7 @@ export default function Contact() {
     '$25,000 - $50,000',
     '$50,000+',
     'Not sure yet',
-  ]
+  ];
 
   const contactReasons = [
     'Project Inquiry',
@@ -89,7 +89,7 @@ export default function Contact() {
     'Hiring/Internship',
     'Partnership/Collaboration',
     'Other',
-  ]
+  ];
 
   const contactInfo = [
     { icon: Mail, label: 'Email', value: 'forgesentry@gmail.com', link: 'mailto:forgesentry@gmail.com' },
@@ -101,14 +101,15 @@ export default function Contact() {
     },
     { icon: MapPin, label: 'Location', value: 'Remote & On-site Available', link: null },
     { icon: Clock, label: 'Response Time', value: 'WhatsApp: Instant • Email: 24h', link: null },
-  ]
+  ];
 
   const founders = [
     {
       name: 'Syed Haider Abbas Zaidi',
       role: 'Cybersecurity Professional',
-      linkedin: 'https://www.linkedin.com/in/syed-haider-abbas-zaidi-132525215/',
-      github: 'https://github.com/haider14-9abbaas',
+      // Company-wide profiles (as requested previously)
+      linkedin: 'https://www.linkedin.com/in/forge-sentry-b93964387/',
+      github: 'https://github.com/forgesentry',
     },
     {
       name: 'Hamza Kamran',
@@ -116,26 +117,26 @@ export default function Contact() {
       linkedin: 'https://www.linkedin.com/in/hamza-kamran-271872297/',
       github: 'https://github.com/Hamza-hani',
     },
-  ]
+  ];
 
   // Submit => open WhatsApp with prefilled message
   const onSubmit = async (data) => {
-    if (isSubmitting) return
-    setIsSubmitting(true)
-    setSubmitStatus(null)
-    setServerError('')
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+    setServerError('');
 
     // Honeypot: if filled, silently succeed
     if (data.website && data.website.trim().length > 0) {
-      setSubmitStatus('success')
-      setIsSubmitting(false)
-      reset()
-      return
+      setSubmitStatus('success');
+      setIsSubmitting(false);
+      reset();
+      return;
     }
 
     try {
-      window.open(waLink, '_blank', 'noopener,noreferrer')
-      setSubmitStatus('success')
+      window.open(waLink, '_blank', 'noopener,noreferrer');
+      setSubmitStatus('success');
       reset({
         fullName: '',
         email: '',
@@ -145,15 +146,15 @@ export default function Contact() {
         message: '',
         consent: false,
         website: '',
-      })
+      });
     } catch (e) {
-      console.error(e)
-      setServerError('Failed to open WhatsApp. Please try again.')
-      setSubmitStatus('error')
+      console.error(e);
+      setServerError('Failed to open WhatsApp. Please try again.');
+      setSubmitStatus('error');
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen pt-20">
@@ -236,6 +237,8 @@ export default function Contact() {
                     className={`input input-bordered w-full bg-white text-slate-900 placeholder:text-slate-400 text-sm sm:text-base ${errors.fullName ? 'input-error' : ''}`}
                     placeholder="Your full name"
                     autoComplete="name"
+                    autoCapitalize="words"
+                    spellCheck={false}
                   />
                   {errors.fullName && (
                     <label className="label">
@@ -254,6 +257,7 @@ export default function Contact() {
                     className={`input input-bordered w-full bg-white text-slate-900 placeholder:text-slate-400 text-sm sm:text-base ${errors.email ? 'input-error' : ''}`}
                     placeholder="your.email@company.com"
                     autoComplete="email"
+                    spellCheck={false}
                   />
                   {errors.email && (
                     <label className="label">
@@ -272,6 +276,8 @@ export default function Contact() {
                     className="input input-bordered w-full bg-white text-slate-900 placeholder:text-slate-400 text-sm sm:text-base"
                     placeholder="Your company name"
                     autoComplete="organization"
+                    autoCapitalize="words"
+                    spellCheck={false}
                   />
                 </div>
 
@@ -324,6 +330,7 @@ export default function Contact() {
                     {...register('message')}
                     className={`textarea textarea-bordered w-full h-32 bg-white text-slate-900 placeholder:text-slate-400 text-sm sm:text-base ${errors.message ? 'textarea-error' : ''}`}
                     placeholder="Tell us about your project, goals, timeline, or any specific requirements..."
+                    spellCheck={false}
                   />
                   {errors.message && (
                     <label className="label">
@@ -425,9 +432,10 @@ export default function Contact() {
                 </div>
               </div>
 
-              {/* Founders */}
+              {/* Founders (fixed button colors) */}
               <div className="card rounded-2xl bg-white border border-slate-200 p-8">
                 <h3 className="text-xl font-display font-semibold text-slate-900 mb-6">Connect with Our Team</h3>
+
                 <div className="space-y-6">
                   {founders.map((f, i) => (
                     <div key={i} className="flex items-center justify-between">
@@ -435,26 +443,32 @@ export default function Contact() {
                         <div className="font-medium text-slate-900">{f.name}</div>
                         <div className="text-sm text-slate-600">{f.role}</div>
                       </div>
-                      <div className="flex space-x-2">
+
+                      <div className="flex gap-2">
+                        {/* LinkedIn – brand cyan on hover, dark icon */}
                         <a
                           href={f.linkedin}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 bg-slate-100 rounded-lg hover:text-white transition-colors duration-200"
-                          style={{ border: '1px solid #e5e7eb' }}
-                          aria-label={`${f.name}'s LinkedIn`}
+                          aria-label={`${f.name} on LinkedIn`}
+                          className="group inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2
+                                     transition hover:bg-[var(--cn-cyan)] hover:border-[var(--cn-cyan)]
+                                     focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cn-cyan)]/40"
                         >
-                          <Linkedin size={16} />
+                          <Linkedin size={16} className="text-slate-600 transition group-hover:text-slate-900" />
                         </a>
+
+                        {/* GitHub – dark on hover, white icon */}
                         <a
                           href={f.github}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 bg-slate-100 rounded-lg hover:text-white transition-colors duration-200"
-                          style={{ border: '1px solid #e5e7eb' }}
-                          aria-label={`${f.name}'s GitHub`}
+                          aria-label={`${f.name} on GitHub`}
+                          className="group inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2
+                                     transition hover:bg-slate-900 hover:border-slate-900
+                                     focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cn-cyan)]/40"
                         >
-                          <Github size={16} />
+                          <Github size={16} className="text-slate-600 transition group-hover:text-white" />
                         </a>
                       </div>
                     </div>
@@ -497,5 +511,5 @@ export default function Contact() {
         </div>
       </section>
     </div>
-  )
+  );
 }
