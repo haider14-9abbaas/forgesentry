@@ -1,4 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
-  <path d="m9 12 2 2 4-4"/>
+<!-- /public/favicon.svg -->
+<svg width="150" height="150" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- ForgeSentry gradient: cyan → purple → lime -->
+    <linearGradient id="cnGrad" x1="72" y1="72" x2="440" y2="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0"  stop-color="#22D3EE"/>
+      <stop offset="0.55" stop-color="#7C3AED"/>
+      <stop offset="1"  stop-color="#A3E635"/>
+    </linearGradient>
+    <!-- subtle inner glow for the check (keeps file tiny) -->
+    <linearGradient id="cnFill" x1="180" y1="180" x2="332" y2="332" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22D3EE" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#7C3AED" stop-opacity="0.15"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Shield outline -->
+  <path
+    d="M256 64l144 48v128c0 92-69 164-144 192-75-28-144-100-144-192V112l144-48z"
+    fill="none"
+    stroke="url(#cnGrad)"
+    stroke-width="34"
+    stroke-linejoin="round"
+    stroke-linecap="round"
+  />
+  <!-- Check mark (slight fill + gradient stroke) -->
+  <path
+    d="M188 262l54 54 82-82"
+    fill="none"
+    stroke="url(#cnGrad)"
+    stroke-width="40"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <!-- soft fill to help at tiny sizes (keeps it subtle/brand-y) -->
+  <path
+    d="M256 64l144 48v128c0 92-69 164-144 192-75-28-144-100-144-192V112l144-48z"
+    fill="url(#cnFill)"
+  />
 </svg>
