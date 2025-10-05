@@ -3,6 +3,7 @@ import { PlayCircle, Github, ExternalLink, Pin } from 'lucide-react';
 
 const ProjectCard = ({ project, index }) => {
   const { title, description, badge, technologies, liveUrl, githubUrl } = project;
+  const liveIsLinkedIn = (liveUrl || '').includes('linkedin.com');
 
   return (
     <motion.div
@@ -34,10 +35,7 @@ const ProjectCard = ({ project, index }) => {
         <div className="mb-4">
           <span
             className="inline-block px-3 py-1 text-xs font-medium rounded-full"
-            style={{
-              backgroundColor: 'rgba(163,230,53,0.12)', // lime/10-ish
-              color: 'var(--cn-lime, #A3E635)',
-            }}
+            style={{ backgroundColor: 'rgba(163,230,53,0.12)', color: 'var(--cn-lime, #A3E635)' }}
           >
             {badge}
           </span>
@@ -93,35 +91,18 @@ const ProjectCard = ({ project, index }) => {
             }}
           >
             <PlayCircle size={16} />
-            Live Demo
+            {liveIsLinkedIn ? 'LinkedIn' : 'Live Demo'}
           </a>
-        ) : (
-          <div className="tooltip" data-tip="Coming soon">
-            <button
-              disabled
-              className="btn btn-sm btn-disabled flex-1 font-medium opacity-50 cursor-not-allowed rounded-lg"
-              style={{
-                backgroundColor: 'var(--cn-cyan, #22D3EE)',
-                borderColor: 'var(--cn-cyan, #22D3EE)',
-                color: '#0B0F19',
-              }}
-            >
-              <PlayCircle size={16} />
-              Live Demo
-            </button>
-          </div>
-        )}
+        ) : null}
 
+        {/* Only render GitHub when provided */}
         {githubUrl ? (
           <a
             href={githubUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-ghost btn-sm flex-1 rounded-lg hover:scale-105 transition-all duration-200"
-            style={{
-              borderColor: 'rgba(203,213,225,0.8)',
-              color: 'rgb(30,41,59)',
-            }}
+            style={{ borderColor: 'rgba(203,213,225,0.8)', color: 'rgb(30,41,59)' }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = 'var(--cn-cyan, #22D3EE)';
               e.currentTarget.style.color = 'var(--cn-cyan, #22D3EE)';
@@ -134,18 +115,7 @@ const ProjectCard = ({ project, index }) => {
             <Github size={16} />
             GitHub
           </a>
-        ) : (
-          <div className="tooltip" data-tip="Coming soon">
-            <button
-              disabled
-              className="btn btn-ghost btn-sm btn-disabled flex-1 rounded-lg opacity-50 cursor-not-allowed"
-              style={{ borderColor: 'rgba(203,213,225,0.8)' }}
-            >
-              <Github size={16} />
-              GitHub
-            </button>
-          </div>
-        )}
+        ) : null}
       </div>
     </motion.div>
   );
