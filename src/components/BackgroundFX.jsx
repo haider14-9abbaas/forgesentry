@@ -2,15 +2,20 @@ import { useEffect, useRef } from "react";
 
 /**
  * Alive background (image-based)
- * - full-bleed image with slow pan (CSS .bg-pan)
+ * - full-bleed image with slow pan
  * - cursor spotlight (updates --mx/--my)
  * - drifting hex grid
  * - light sweep + scanlines
  * - aurora blobs
  * - tiny particles (desktop only)
+ *
+ * NOTE:
+ *   Desktop: image uses object-fit: contain (no crop)
+ *   Mobile : image uses object-fit: cover & object-position: 80% center (crop from right)
+ *   The CSS for this is in index.css (.bgfx-image rules).
  */
 export default function BackgroundFX({
-  src = "/hero-bg.svg",
+  src = "/bg.png",     // <- default background file
   alt = "",
   showHex = true,
   showAurora = true,
@@ -67,10 +72,10 @@ export default function BackgroundFX({
       const { width, height } = c.getBoundingClientRect();
       W = Math.floor(width * DPR);
       H = Math.floor(height * DPR);
-      c.width = W; c.height = H;
+      c.width = W;
+      c.height = H;
       pts.length = 0;
 
-      // A bit denser & faster so it's clearly visible
       const density = Math.max(22, Math.floor((W * H) / (200_000 * DPR)));
       for (let i = 0; i < density; i++) {
         pts.push({
@@ -85,14 +90,13 @@ export default function BackgroundFX({
     const step = () => {
       ctx.clearRect(0, 0, W, H);
 
-      // move
       for (const p of pts) {
-        p.x += p.vx; p.y += p.vy;
+        p.x += p.vx;
+        p.y += p.vy;
         if (p.x < 0 || p.x > W) p.vx *= -1;
         if (p.y < 0 || p.y > H) p.vy *= -1;
       }
 
-      // connection lines (slightly stronger)
       ctx.globalAlpha = 0.42;
       for (let i = 0; i < pts.length; i++) {
         for (let j = i + 1; j < pts.length; j++) {
@@ -103,19 +107,18 @@ export default function BackgroundFX({
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);
-            ctx.strokeStyle = "rgba(79,70,229,0.14)"; // indigo
+            ctx.strokeStyle = "rgba(79,70,229,0.14)";
             ctx.lineWidth = 1 * DPR;
             ctx.stroke();
           }
         }
       }
 
-      // dots
       ctx.globalAlpha = 0.8;
       for (const p of pts) {
         ctx.beginPath();
         ctx.arc(p.x, p.y, 1.25 * DPR, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(34,197,94,0.28)"; // lime-ish
+        ctx.fillStyle = "rgba(34,197,94,0.28)";
         ctx.fill();
       }
 
@@ -140,11 +143,11 @@ export default function BackgroundFX({
       style={{ background: "#0B0F19" }}
       aria-hidden
     >
-      {/* base image with slow pan (CSS anim) */}
+      {/* base image with pan (fit rules controlled in index.css) */}
       <img
         src={src}
         alt={alt}
-        className="absolute inset-0 h-full w-full object-cover will-change-transform bg-pan"
+        className="bgfx-image absolute inset-0 w-full h-full will-change-transform"
         loading="eager"
         decoding="sync"
         fetchpriority="high"
@@ -163,12 +166,7 @@ export default function BackgroundFX({
       {/* cursor spotlight */}
       <div className="cursor-spotlight" />
 
-      {/* animated light sweep */}
-      <div className="light-sweep" />
-
-      {/* scanlines */}
-      <div className="scanlines" />
-
+      
       {/* aurora blobs */}
       {showAurora && (
         <>

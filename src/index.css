@@ -11,13 +11,17 @@
   --cn-cyan:#22D3EE;      /* primary action */
   --cn-lime:#A3E635;      /* accent */
   --cn-purple:#7C3AED;    /* mid of logo gradient */
+
+  /* cursor spotlight defaults (updated by JS) */
   --mx: 50%;
   --my: 40%;
 }
 
-/* Base page theme */
+/* =========================================================
+   BASE PAGE THEME — now uses bg.png
+   ========================================================= */
 body{
-  background: var(--cn-bg) url('/hero-bg.svg') center/cover no-repeat;
+  background: var(--cn-bg) url('/bg.png') center/cover no-repeat;
   color: var(--cn-text);
 }
 @media (min-width: 1024px){
@@ -25,49 +29,78 @@ body{
 }
 html, body { overflow-x: hidden; }
 
-/* Scene wrapper */
+/* =========================================================
+   BG SCENE LAYOUT
+   ========================================================= */
 .bg-scene{
   position: absolute;
-  inset: -48px;
+  inset: -48px;                 /* overscan/bleed to hide pan edges */
   transform: translate3d(0,0,0);
   will-change: transform;
   backface-visibility: hidden;
 }
 
-/* Slow pan */
+/* Background image behaviour
+   Desktop: no crop (contain). Gentle translate-only pan.
+   Mobile : fill & crop from RIGHT so subject stays visible. */
+.bgfx-image{
+  object-fit: contain;
+  object-position: center center;
+  animation: bg-pan-contain 50s ease-in-out infinite;
+}
+@keyframes bg-pan-contain {
+  0%   { transform: translate3d(0,0,0); }
+  50%  { transform: translate3d(-16px,-10px,0); }
+  100% { transform: translate3d(10px,12px,0); }
+}
+
+/* Mobile framing: crop from right (80%) so human stays in view */
+@media (max-width: 768px){
+  .bgfx-image{
+    object-fit: cover;
+    object-position: 80% center; /* push focus to the right */
+    animation: bg-pan 40s ease-in-out infinite;
+  }
+}
+
+/* Slow pan used on mobile (with slight scale to avoid edge flashes) */
 @keyframes bg-pan {
   0%   { transform: scale(1.025) translate3d(0,0,0); }
   50%  { transform: scale(1.035) translate3d(-12px,-8px,0); }
   100% { transform: scale(1.025) translate3d(8px,10px,0); }
 }
-.bg-pan {
-  animation: bg-pan 40s ease-in-out infinite;
-  will-change: transform;
-  backface-visibility: hidden;
-}
 
-/* Spotlight */
+/* =========================================================
+   CURSOR SPOTLIGHT
+   ========================================================= */
 .cursor-spotlight{
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(260px 260px at var(--mx) var(--my),
-    rgba(255,255,255,0.14),
-    rgba(255,255,255,0.08) 35%,
-    rgba(255,255,255,0.00) 68%);
+  background:
+    radial-gradient(260px 260px at var(--mx) var(--my),
+      rgba(255,255,255,0.14),
+      rgba(255,255,255,0.08) 35%,
+      rgba(255,255,255,0.00) 68%);
   mix-blend-mode: screen;
   opacity: .7;
   transition: background-position .08s linear;
   will-change: background-position;
 }
 
-/* Sweep & scanlines */
+/* =========================================================
+   LIGHT SWEEP & SCANLINES
+   ========================================================= */
 .light-sweep{
   position: absolute;
   inset: -20% -20%;
   background:
-    radial-gradient(40% 70% at 0% 0%, rgba(255,255,255,.06), transparent 60%),
-    linear-gradient(115deg, rgba(34,211,238,.10) 0%, rgba(124,58,237,.08) 50%, rgba(34,211,238,.10) 100%);
+    radial-gradient(40% 70% at 0% 0%,
+      rgba(255,255,255,.06), rgba(255,255,255,0) 60%) ,
+    linear-gradient(115deg,
+      rgba(34,211,238,.10) 0%,
+      rgba(124,58,237,.08) 50%,
+      rgba(34,211,238,.10) 100%);
   mix-blend-mode: screen;
   animation: sweep 16s linear infinite;
   pointer-events: none;
@@ -83,22 +116,28 @@ html, body { overflow-x: hidden; }
 .scanlines{
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(255,255,255,0.03) 0px,
-    rgba(255,255,255,0.03) 1px,
-    transparent 2px,
-    transparent 4px
-  );
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.03) 0px,
+      rgba(255,255,255,0.03) 1px,
+      transparent 2px,
+      transparent 4px
+    );
   animation: scan-drift 18s linear infinite;
   opacity: .06;
   pointer-events: none;
   will-change: transform;
   backface-visibility: hidden;
 }
-@keyframes scan-drift { from { transform: translateY(0); } to { transform: translateY(-32px); } }
+@keyframes scan-drift {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-32px); }
+}
 
-/* Aurora */
+/* =========================================================
+   AURORA BLOBS
+   ========================================================= */
 .aurora{
   border-radius: 50%;
   filter: blur(60px);
@@ -111,8 +150,8 @@ html, body { overflow-x: hidden; }
   will-change: transform, opacity, filter;
   backface-visibility: hidden;
 }
-.aurora-2{ animation-duration:22s; transform: rotate(6deg); }
-.aurora-3{ animation-duration:26s; transform: rotate(-4deg); }
+.aurora-2{ animation-duration: 22s; transform: rotate(6deg); }
+.aurora-3{ animation-duration: 26s; transform: rotate(-4deg); }
 
 @keyframes aurora-move{
   0%   { transform: translate3d(0,0,0) scale(1);   opacity: .62; }
@@ -120,22 +159,23 @@ html, body { overflow-x: hidden; }
   100% { transform: translate3d(-36px,30px,0) scale(.98);  opacity: .62; }
 }
 
-/* Hex grid */
-@keyframes hex-drift { 0% { transform: translate3d(0,0,0); } 100% { transform: translate3d(0,-28px,0); } }
-.animate-hex-drift{
+/* =========================================================
+   HEX GRID DRIFT
+   ========================================================= */
+@keyframes hex-drift {
+  0%   { transform: translate3d(0,0,0); }
+  100% { transform: translate3d(0,-28px,0); }
+}
+.animate-hex-drift {
   animation: hex-drift 25s linear infinite alternate;
   will-change: transform;
   backface-visibility: hidden;
 }
 
-/* =========================================
-   Mobile / reduced-motion (do NOT hide .bg-pan)
-========================================= */
+/* =========================================================
+   MOBILE / REDUCED MOTION
+   ========================================================= */
 @media (max-width: 1024px), (prefers-reduced-motion: reduce){
-  /* Keep the image; only stop its animation */
-  .bg-pan{ animation: none !important; }
-
-  /* Hide effect layers on phones */
   .light-sweep,
   .scanlines,
   .aurora,
@@ -146,7 +186,9 @@ html, body { overflow-x: hidden; }
   }
 }
 
-/* ===== Helpers, forms, etc. (unchanged from your version) ===== */
+/* =========================================================
+   GLOBAL HELPERS
+   ========================================================= */
 .gradient-text{
   background:linear-gradient(90deg,var(--cn-cyan),var(--cn-purple),var(--cn-lime));
   -webkit-background-clip:text;
@@ -186,49 +228,71 @@ html, body { overflow-x: hidden; }
   transition:outline-color .2s ease, box-shadow .2s ease, transform .2s ease;
 }
 
-.input,.select,.textarea{
+/* =========================================================
+   FORMS
+   ========================================================= */
+.input,
+.select,
+.textarea{
   background-color:#ffffff !important;
   color:#0f172a !important;
   border-color:rgba(148,163,184,.5);
 }
-.input::placeholder,.textarea::placeholder{
+.input::placeholder,
+.textarea::placeholder{
   color:#94a3b8 !important;
   opacity:1 !important;
 }
-.label .label-text,.label .label-text-alt{ color:#334155 !important; }
-.checkbox{ border-color:rgba(148,163,184,.6); background:#ffffff; }
-.checkbox:checked{ background:var(--cn-cyan); border-color:var(--cn-cyan); }
+.label .label-text,
+.label .label-text-alt{ color:#334155 !important; }
+.checkbox{
+  border-color:rgba(148,163,184,.6);
+  background:#ffffff;
+}
+.checkbox:checked{
+  background:var(--cn-cyan);
+  border-color:var(--cn-cyan);
+}
 
-input:-webkit-autofill,textarea:-webkit-autofill,select:-webkit-autofill{
+/* Chrome autofill */
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+select:-webkit-autofill{
   -webkit-text-fill-color:#0f172a !important;
   transition:background-color 5000s ease-in-out 0s;
 }
+
+/* Disabled button still readable */
 .btn:disabled{ opacity:.75; cursor:not-allowed; }
 
-@media (max-width:640px){
+/* Responsive type helpers */
+@media (max-width: 640px){
   .label .label-text{ font-size:.9rem; }
   .label .label-text-alt{ font-size:.75rem; }
   .alert{ font-size:.9rem; }
 }
 
-.label .label-text,.label .label-text-alt{ white-space: normal; line-height: 1.25; }
+/* Form mobile readability + wrapping */
+.label .label-text,
+.label .label-text-alt { white-space: normal; line-height: 1.25; }
 .textarea { resize: vertical; }
 .form-responsive { font-size: 15px; }
 
-@media (max-width:420px){
+@media (max-width: 420px) {
   .form-responsive { font-size: 14px; }
   .form-responsive .input,
   .form-responsive .select,
-  .form-responsive .textarea { padding-top:.65rem; padding-bottom:.65rem; }
-  .form-responsive .label .label-text      { font-size:.9rem; }
-  .form-responsive .label .label-text-alt  { font-size:.75rem; }
-  .form-responsive .checkbox { width:1rem; height:1rem; min-width:1rem; }
-  .form-responsive .btn { padding-top:.9rem; padding-bottom:.9rem; line-height:1.1; }
+  .form-responsive .textarea { padding-top: .65rem; padding-bottom: .65rem; }
+  .form-responsive .label .label-text      { font-size: .9rem; }
+  .form-responsive .label .label-text-alt  { font-size: .75rem; }
+  .form-responsive .checkbox { width: 1rem; height: 1rem; min-width: 1rem; }
+  .form-responsive .btn { padding-top: .9rem; padding-bottom: .9rem; line-height: 1.1; }
 }
 
+/* Footer CTA responsiveness */
 .footer-cta-responsive .btn,
-.footer-cta-responsive .btn-sm { min-height:48px; }
-@media (max-width:420px){
+.footer-cta-responsive .btn-sm { min-height: 48px; }
+@media (max-width: 420px){
   .footer-cta-responsive .btn,
   .footer-cta-responsive .btn-sm{
     min-height:44px !important;
@@ -240,16 +304,28 @@ input:-webkit-autofill,textarea:-webkit-autofill,select:-webkit-autofill{
   .footer-cta-responsive .btn-sm svg{ width:18px; height:18px; }
 }
 
-/* Legacy helpers */
-.bgfx-image-wrap{ position:fixed; inset:0; z-index:-1; overflow:hidden; background:#0B0F19; }
-.bgfx-image{ width:100%; height:100%; object-fit:cover; object-position:center; filter:brightness(.9); pointer-events:none; }
-.bgfx-overlay{ position:absolute; inset:0; background:linear-gradient(180deg,rgba(0,0,0,.15) 0%,rgba(0,0,0,.25) 40%,rgba(0,0,0,.35) 100%); pointer-events:none; }
+/* =========================================================
+   Legacy helpers — also updated to bg.png
+   ========================================================= */
+.bgfx-image-wrap{
+  position:fixed; inset:0; z-index:-1; overflow:hidden; background:#0B0F19;
+}
+.bgfx-image{
+  width:100%; height:100%; object-fit:cover; object-position:center;
+  filter:brightness(.9); pointer-events:none;
+}
+.bgfx-overlay{
+  position:absolute; inset:0;
+  background:linear-gradient(180deg,rgba(0,0,0,.15) 0%,rgba(0,0,0,.25) 40%,rgba(0,0,0,.35) 100%);
+  pointer-events:none;
+}
 
+/* Respect data/motion savings */
 @media (prefers-reduced-motion: reduce){
   .bgfx-image-wrap{ display:none !important; }
-  body{ background:#0B0F19 url('/hero-bg.svg') center/cover no-repeat; }
+  body{ background:#0B0F19 url('/bg.png') center/cover no-repeat; }
 }
 @media (prefers-reduced-data: reduce){
   .bgfx-image-wrap{ display:none !important; }
-  body{ background:#0B0F19 url('/hero-bg.svg') center/cover no-repeat; }
+  body{ background:#0B0F19 url('/bg.png') center/cover no-repeat; }
 }
