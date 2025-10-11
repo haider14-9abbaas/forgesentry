@@ -101,14 +101,18 @@ const Home = () => {
 
         <div className="relative z-20 container mx-auto px-4 sm:px-6 lg:px-8">
           <m.div variants={stagger()} initial="hidden" animate="show" className="max-w-4xl">
-            <m.h1
-              variants={fadeUp}
-              className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-display font-extrabold tracking-tight text-white"
-              style={{ textShadow: '0 2px 18px rgba(0,0,0,.35)' }}
-            >
-              We build secure <span className="gradient-text animate-hue">apps & automations</span>
-              <br className="hidden md:block" /> that people actually use.
-            </m.h1>
+           <m.h1
+  variants={fadeUp}
+  className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-display font-extrabold tracking-tight text-white"
+  style={{ textShadow: '0 2px 18px rgba(0,0,0,.35)' }}
+>
+  We build secure{' '}
+  <span className="gradient-text animate-hue whitespace-nowrap">
+    apps&nbsp;&amp;&nbsp;automations
+  </span>
+  <br className="hidden md:block" /> that people actually use.
+</m.h1>
+
 
             <m.p variants={fadeUp} className="mt-5 text-lg sm:text-xl text-slate-200/90 max-w-2xl">
               See outcomes first. No pop-ups, no packages — just real projects.

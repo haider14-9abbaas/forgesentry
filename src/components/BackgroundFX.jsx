@@ -15,7 +15,7 @@ import { useEffect, useRef } from "react";
  *   The CSS for this is in index.css (.bgfx-image rules).
  */
 export default function BackgroundFX({
-  src = "/bg.png",     // <- default background file
+  src = "/ai-robot-hero_enhanced.svg",     // <- default background file
   alt = "",
   showHex = true,
   showAurora = true,
